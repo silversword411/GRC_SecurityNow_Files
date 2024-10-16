@@ -4,4 +4,4 @@
 
 ## TLDR for Google's NotebookLM
 
-Download [this](/summarized/summarized001-977.zip), extract and upload to a notebook.
+Download [this](/summarized/summarized001-977.zip), extract and upload to a notebook. Slowly. When I tried, it rejected random ones. I'd do 5 files at a time.
