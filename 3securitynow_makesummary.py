@@ -3,6 +3,7 @@ import re
 
 # Define constants
 MAX_WORDS = 490000
+EPISODES_FOLDER = 'episodes'
 SUMMARIZED_FOLDER = 'summarized'
 
 # Create the summarized folder if it doesn't exist
@@ -54,16 +55,15 @@ def save_merged_file(content, file_list, output_filename_base, counter):
         f.write(content)
     print(f"Saved {merged_file_name}")
 
-
 def main():
-    # Specify the folder where your files are located
-    input_folder = os.path.dirname(os.path.abspath(__file__))
+    # Specify the folder where your episode files are located
+    input_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), EPISODES_FOLDER)
 
-    # Get all text files in the directory
+    # Get all text files in the episodes directory
     files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.endswith('.txt')]
 
     if not files:
-        print("No text files found in the directory.")
+        print("No text files found in the episodes folder.")
         return
 
     # Call the merge_files function to start merging

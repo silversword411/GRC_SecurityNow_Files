@@ -2,8 +2,8 @@ import os
 import re
 from datetime import datetime
 
-# Directory containing the downloaded files
-save_dir = os.path.dirname(os.path.abspath(__file__))
+# Directory containing the downloaded files under the 'episodes' folder
+save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'episodes')
 
 # Function to extract the date from the file content
 def extract_date(file_content):
