@@ -14,12 +14,24 @@ def count_words(text):
     """Counts the words in a string."""
     return len(re.findall(r'\b\w+\b', text))
 
+def natural_sort_key(filename):
+    """
+    Returns a list of strings and integers that 
+    can be used as a sort key for natural sorting.
+    """
+    # Extract numeric portions and convert them to int
+    return [int(text) if text.isdigit() else text.lower()
+            for text in re.split(r'(\d+)', filename)]
+
 def merge_files(files, output_filename):
     """Merge multiple text files into one, given a list of file paths."""
     total_words = 0
     merged_content = ""
     file_list = []
     counter = 1  # Counter to name files part1, part2, etc.
+
+    # Sort files naturally to handle 1000+ episodes correctly
+    files = sorted(files, key=lambda f: natural_sort_key(os.path.basename(f)))
 
     for file in files:
         with open(file, 'r', encoding='utf-8') as f:
@@ -28,7 +40,7 @@ def merge_files(files, output_filename):
             if total_words + words_in_file > MAX_WORDS:
                 # Save the current merged file before exceeding the word limit
                 save_merged_file(merged_content, file_list, output_filename, counter)
-                # Reset for the next file
+                # Reset for the next batch
                 total_words = 0
                 merged_content = ""
                 file_list = []
@@ -38,7 +50,7 @@ def merge_files(files, output_filename):
             total_words += words_in_file
             file_list.append(file)
 
-    # Save any remaining files
+    # Save any remaining content
     if merged_content:
         save_merged_file(merged_content, file_list, output_filename, counter)
 
@@ -66,7 +78,7 @@ def main():
         print("No text files found in the episodes folder.")
         return
 
-    # Call the merge_files function to start merging
+    # Merge the files into summary parts without exceeding MAX_WORDS
     merge_files(files, 'summary')
 
 if __name__ == "__main__":
