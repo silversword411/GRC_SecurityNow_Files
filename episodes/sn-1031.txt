@@ -1,0 +1,1023 @@
+GIBSON RESEARCH CORPORATION		https://www.GRC.com/
+
+SERIES:		Security Now!
+EPISODE:	#1031
+DATE:		June 24, 2025
+TITLE:		How Salt Typhoon Gets In
+HOSTS:	Steve Gibson & Leo Laporte
+SOURCE:	https://media.grc.com/sn/sn-1031.mp3
+ARCHIVE:	https://www.grc.com/securitynow.htm
+
+DESCRIPTION:  China's Salt Typhoon claims another victim (or two).  State healthcare portals are tracking and leaking.  No kidding.  Apple adopts FIDO's Passkeys and other credentials transport.  Facebook gets Passkey logon.  TikTok continues ticking for at least another 90 days.  Canadian telco admits they were infiltrated by Salt Typhoon.  Microsoft to remove unwanted (and hopefully unneeded) hardware drivers.  The Austrian government legislates court-warranted message decryption.  Steve finally gets full clarity on what today's "AI" means.  A deep dive into the Salt Typhoon's operation and how they got in.
+
+SHOW TEASE:  It's time for Security Now!.  Steve Gibson is here.  We are going to talk about, as usual, some terrifying security issues on the Internet.  Your state healthcare portal may be leaking information about you to data brokers and others.  We'll talk about Facebook getting a Passkey login.  Apple adopting the new Passkey portability, which is great.  And then a deep dive into how Chinese government hackers got into our phone system.  Turns out there's one American company that's at fault.  Steve has the deets, next on Security Now!.
+
+LEO LAPORTE:  This is Security Now! with Steve Gibson, Episode 1031, recorded Tuesday, June 24th, 2025:  How Salt Typhoon Gets In.
+
+It's time for Security Now!.  Oh, the show you wait for all week long.  Every Tuesday we get together with this guy right here, Mr. Steve Gibson.  And we learn about all the nasty, horrible, terrible, no-good, very bad things that are happening on the Internet.  Hello, Steve.
+
+STEVE GIBSON:  And every so often other stuff.  And Leo...
+
+LEO:  Yeah, and then all the other stuff, too.  That's the...
+
+STEVE:  Great to be with you for Episode 1031 for this last episode of - wait.  Is this?  No.  The 31st?  July?  We have one more?
+
+LEO:  This is June 24th.
+
+STEVE:  Yeah.
+
+LEO:  So the next one will be June - no, it'll be July 1st.
+
+STEVE:  Right.
+
+LEO:  Because 30 days hath September, April, June, and November.
+
+STEVE:  Right, right, that's right.  Yup.
+
+LEO:  All the rest have 31 except for February, which...
+
+STEVE:  Which is all messed up.
+
+LEO:  I can never remember the rest of that rhyme.
+
+STEVE:  Again, as somebody who codes things with dates and times, and you're dividing by 60, it's like, what?  60?  Who came up with that?  And 24...
+
+LEO:  And the Leap Year every fourth year.
+
+STEVE:  Oh, my god.
+
+LEO:  Except if a year ends in a 400.  If it's divisible by 400, then it's not a Leap Year.
+
+STEVE:  So today we're going to talk about something that we've been skirting around.  Salt Typhoon was active for some time before - and it was like, okay, another Chinese APT.
+
+LEO:  Oh, little did we know.
+
+STEVE:  But oh, boy.  These guys are in a class by themselves, unfortunately.  We were just last week talking about how they were found in Digital Realty, which was this major cloud provider that Amazon and Google and others buy their cloud resources from, and one other telecom, I can't remember now because I've got - there's now 10 of them.  Anyway, we're going to talk about how they get in because earlier this year Cisco themselves, which is unfortunately the entry vector, their Talos Group laid out the story.  And as always, I try to do more than just recite news.  I try to create some context and see if there's, like, something that we can learn from this.  And I have a proposal as a consequence of this in addition to all the other events and evidence that we see of what has to happen, what has to change.  And it's maybe not what people would expect.  So we're going to talk about that.
+
+We're going to talk about another victim of them or two having been identified.  Also the fact that state healthcare portals are tracking and leaking, probably to no one's surprise, but it's sad.  Apple adopts FIDO's Passkeys and other credentials transport, which is fabulous news for what's going on with Passkeys.  Facebook is adding Passkeys.  I heard you mention, it was either on Sunday or just now, Leo, that TikTok has been extended yet again.
+
+LEO:  Yeah, another 90 days, yeah, yeah, yeah.  I think you can count on that every three months.
+
+STEVE:  Yup.  We have a Canadian telco that has acknowledged their infiltration by Salt Typhoon.  That's the first known one in Canada.
+
+LEO:  Ooh, interesting, huh.
+
+STEVE:  Microsoft has announced they're going to be removing unwanted and hopefully unneeded hardware drivers, which we touched on before when they were first talking about it.  Now they have actually - they're moving on it.  The Austrian government has legislated court-warranted message decryption which I think is almost funny because, you know, you can ask.  And in something of a surprise, I'm going to cycle back once again to a topic we've touched on a number of times, which is artificial intelligence, because I asked ChatGPT a question on Saturday.
+
+Its answer stunned me, and I'm, as a consequence of that, and I guess just months now of living with this, I believe I have full clarity, finally, at least for myself, I'll see if it transmits to our audience, on what this is, what AI is.  And from that I would be willing to place a bet on its limits because I think I get it, finally, why we're confused, why we've been confused, why my screen just went dark...
+
+LEO:  Salt Typhoon.
+
+STEVE:  I have a short duration screen blanker that I forgot to disable before I started the podcast.
+
+LEO:  Oh, yeah.  Oh, yeah.  That's your light.  You can't do that.  It's your key light.
+
+STEVE:  Yeah, it is.  Anyway, so anyway, I just - I have something that I think, that I haven't said before, that resolves this for me.  And so this may be the last time I talk about this for a while.  And then we're going to take a deep dive into Salt Typhoon's operation, how they got in, sadly why they're still getting in, and what I think we have to do to change this finally.
+
+LEO:  Oh.  It's good to know there's something we could do, even.
+
+STEVE:  There is.  And I also think some of this is as a consequence of this incredible delay that we see throughout the whole system.  You know, IPv6 was finalized in 1998.
+
+LEO:  Yeah.
+
+STEVE:  And it's, you know, I don't have it, need it.  GRC doesn't have any IPv6 IPs.  So one of the things that's happening is that nothing changes unless it has to.  
+
+LEO:  There's a lot of inertia in the system, yeah.
+
+STEVE:  I mean, there is, yes, there's so much inertia.
+
+LEO:  Yeah.
+
+STEVE:  And now with somebody like Cloudflare being able to host a huge percentage of the Internet behind a subset of IPs, thanks to SNI, Server Name Indication, suddenly the pressure is off.  It's not like we're going to run out.  For a while, remember we had the end of IPv4 countdown.  And, you know, doomsday coming, and the price of IPv4 addresses was shooting up.  Well, not so much anymore.
+
+LEO:  Well, by the way, speaking of Cloudflare, we're going to get their CTO, John Graham-Cumming, on Intelligent Machines at some point because you know he's created a site.  You know, there's a huge demand for steel that was created before the nuclear age, right, because it's got no radioactivity.  And they use it in medical devices and things.
+
+STEVE:  Huh, interesting.
+
+LEO:  And the only source of it is things like ships that were sunk during World War I, and they could bring them up, and then there's this - you re use that steel in very careful circumstances.  So he has created a website of text information that was created before the age of AI.  Isn't that brilliant?
+
+STEVE:  That is.  That is really good.
+
+LEO:  Yeah.  So we're going to get him on to talk about that.  But I will also ask him a lot about Cloudflare.  They've done such an amazing job with what they've done and what they offer as such a public service for free.  It's kind of amazing; you know?  Really, I like John a lot.  He's a great guy.
+
+STEVE:  Well, I like him, and I agree with you.  We're often talking about them because they do such a great job.
+
+LEO:  Let's do a good job for our next sponsor, and then we will get to the Picture of the Week.  What do you say?  How about that?
+
+STEVE:  I like it.
+
+LEO:  All right.  I am ready to scroll up, as we say, on the Picture of the Week.  It's been hiding on my screen all this time.
+
+STEVE:  So I gave this picture the caption:  "When a bit of punctuation might save a life."
+
+LEO:  Hmm.
+
+STEVE:  When a bit of punctuation might save a life.
+
+LEO:  All right.  Scrolling up here.  Let me just see.  Uh, it's a sign, a sign you should pay attention to.
+
+STEVE:  Sign has two lines.  First line says "Crocodiles."  Second line says "Do not swim here."
+
+LEO:  [Crosstalk] said in our Discord, says "Why don't we want crocodiles to swim there again?"
+
+STEVE:  Yeah, well, because people should be allowed to swim there.  So I think the sign is just - this might be in Florida.  You never know.  It might just be saying, "Just so you swimmers know, crocodiles don't swim here."
+
+LEO:  No.  No, that's not what it means, Steve.
+
+STEVE:  What?
+
+LEO:  I think they're saying there are crocodiles here.  Do not swim here.
+
+STEVE:  Oh.
+
+LEO:  Or it could be a message to the crocodiles.  I don't know.
+
+STEVE:  Oh.
+
+LEO:  Oh.  What would you put there?  A comma?
+
+STEVE:  They should put a couple of exclamation points.
+
+LEO:  Or just an exclamation point.  Crocodiles!
+
+STEVE:  Exactly.  Yeah.
+
+LEO:  Or maybe just say "Stay out of the water."  How about that one?  "Beware."  That's hysterical.  I love it.
+
+STEVE:  Yeah.  I like that.  Okay.  So the Dark Reading outlet reports under their headline "Telecom Giant Viasat Is Latest Salt Typhoon Victim," with the subheading "The communications company shared the discoveries of its investigation with government partners, but there is little information they can publicly disclose other than that there seems to be no impact on customers."  It's like, okay, well, of course that's the story they want to share.
+
+LEO:  Yeah, unless you're the President, the National Security Chiefs, things like that.
+
+STEVE:  Well, yeah, and what does it mean?  Like, well, no one's password was exfiltrated.  It's like, wait.  You're a telecom provider.  You're Viasat.  Anyway, so Dark Reading said:  "Viasat is the latest telecom business to fall victim to Salt Typhoon..."  Now, I should note, probably more accurate to say the latest telecom business to acknowledge or to discover or to reveal whatever.  It's not, well, anyway, we've got a lot to talk about with Salt Typhoon today.  But the article says:  "...the notorious cyberespionage threat group," speaking of Salt Typhoon.  "The breach at the satellite communications company was discovered earlier this year and has been identified as one of the threat group's targets during the 2024 presidential campaign, according to Bloomberg News, which first reported the breach.
+
+"The California-based company" - that is, Viasat - "operates a satellite fleet and various ground stations to support a global network, providing high-speed satellite broadband services and networking systems to both military and commercial consumers.  Following a report of unauthorized access through a compromised device" - and again, we're going to know exactly what happened, which CVSS or CVE was involved, and we have the back story, which we're going to be getting to, as I said.
+
+The company said:  "Upon completing a thorough investigation, no evidence was found to suggest any impact to customers.  Due to the sensitive nature of information sharing with government partners, we are unable to provide further details.  Viasat believes that the incident has been remediated and has not detected any recent activity related to this event."  Again, hard to prove a negative, but okay.
+
+"Salt Typhoon," they write, "meanwhile has targeted several telecom companies this year alone.  In January, the group targeted Charter Communications, Consolidated Communications, and Windstream.  Then, in February, Cisco confirmed that the group exploited a Cisco vulnerability so that it could infiltrate telecommunications providers including T-Mobile, AT&T, and Verizon last fall, maintaining access to the compromised environments for extended periods of time."  And if you can believe it, in one case three years they were found to be in networks.
+
+"U.S. officials," they write, "have previously raised suspicions of hackers targeting the companies to steal telephone audio intercepts and record call data.  Enough attacks have occurred in the lengthy cyberespionage campaign that CISA, our Cybersecurity and Information Security Agency, was prompted to issue guidance to the telecom sector alongside the National Security Agency and FBI.  In addition, the House Committee on Government Reform dedicated a hearing to Salt Typhoon on April 2nd to address what actions the U.S. could take in retaliation, though Edward Amoroso, research professor at New York University, advised against 'hacking back' in his testimony, stating that the country should see these attacks as a wake-up call to shore up its defenses."  And again, this all ties back to today's topic, which we'll be getting to.
+
+So we have Verizon, AT&T, T-Mobile, Spectrum, Lumen, Consolidated Communications, Windstream, then as we talked about last week, Comcast and Digital Realty, and now Viasat.  It's a mess.  The best news about this is that we have seen over and over (and over) how reluctant companies are to address their own latent infrastructure security troubles.  What's apparently necessary is for something as high-profile as these multiple continuing Salt Typhoon attacks, or at least revelations, which have successfully remained in the headlines for months and have finally come to the attention of the U.S. Congress.
+
+Maybe there's a chance that this will finally get companies to sit up, take notice, and assign someone to the task of critically examining the security of their older equipment.  We now know a great deal about how Salt Typhoon did what it did; and, as I said, we're going to take a deep dive into the depths of that, into the depths of that typhoon, at the end of today's podcast.
+
+Before we leave the topic I also want to share what BleepingComputer reported since it adds some additional depth to this.  BleepingComputer, of course we know them well, wrote:  "Satellite communications company Viasat is the latest victim of China's Salt Typhoon cyberespionage group, which has previously hacked into the networks of multiple other telecom providers in the U.S. and worldwide."  It's not just us here in the states.  "Viasat provides satellite broadband services to governments worldwide and aviation, military, energy, maritime, and enterprise customers.  Last month, the telecom giant told shareholders that it had approximately 189,000 broadband subscribers in the U.S.
+
+"The company discovered the Salt Typhoon breach earlier this year and has been working with federal authorities to investigate the attack, as Bloomberg first reported.  Viasat told BleepingComputer:  'Viasat and its independent third-party cybersecurity partner investigated a report of unauthorized access through a compromised device.'"  And again, we're going to know all about that.  "'Upon completing a thorough investigation,' they said, 'no evidence was found to suggest any impact to customers.  Viasat engaged with government partners as part of its investigation.  Due to the sensitive nature of information sharing'" - so this is a repeat from the previous article.
+
+"BleepingComputer first contacted Viasat," they wrote, "in February with questions regarding a potential breach, but received no reply at the time.  Russian hackers also breached Viasat's KA-SAT consumer-oriented satellite broadband service in February three years ago, 2022, wiping satellite modems using AcidRain data wiper malware roughly one hour before Russia invaded Ukraine.  The 2022 cyberattack impacted tens of thousands of broadband customers in Ukraine and Europe, including modems controlling roughly 5,800 wind turbines in Germany.
+
+"As the FBI and CISA confirmed in October, the Chinese Salt Typhoon state hackers had breached multiple telecom providers," and they enumerate them again, "and other telecom companies in dozens of countries.  While inside U.S. telecom networks, the attackers also accessed the U.S. law enforcement's wiretapping platform and gained access to the 'private communications' of a 'limited number' of U.S. government officials."  That was, again, Congress said, what?  Now you're talking about us.  "Earlier this month, NSA and CISA officials also tagged Comcast and Digital Realty as potentially compromised in Salt Typhoon's telecom attacks."  And now we know that has been confirmed.  And in fact both companies have acknowledged that.
+
+"Salt Typhoon has been breaching government organizations and telecom companies since at least 2019 and kept actively targeting telecoms between December 2024 and January 2025," so the very end of last year and the very beginning of this year, "breaching more telecommunications providers worldwide via unpatched Cisco IOS XE network devices, which is where we're going to be spending a lot of time."
+
+The flaws that were once present in Cisco's - IOS is a confusing name because of course we're talking about Apple stuff all the time.  In this case it's Internet Operating System.  And Cisco's IOS acronym predates Apple's iOS for iDevices.  These XE network devices were leveraged to admit the attackers into these networks.  But Cisco had found and patched those vulnerabilities long ago, as in years before.  Those flaws were used to gain illicit entry into these companies' networks.  So while Cisco was to blame for once having vulnerabilities, they fixed those flaws years before they were used.  Which is a key factor in the import of this story.
+
+I'm at a loss to know how we can ever get this behavior to change because it should have changed already; right?  I doubt we're ever going to be able to hold the purchaser and user of these products accountable.  Companies purchase them - I mean like practically accountable.  Sure, we can say, oh, you're legally responsible.  But, I mean, in practice, so that it's not a matter of ascribing responsibility and blame and victims licking their wounds, but not having the intrusions in the first place.
+
+LEO:  Well, and also remember the Biden administration had an executive order which I'm sure no longer exists that companies would be liable for keeping their software and hardware reliable, like the sellers, as well.
+
+STEVE:  There has been some rollback of those regulations.
+
+LEO:  Of course there has been because - of course.
+
+STEVE:  Yeah.  So what happens is companies purchase these devices.  They didn't make them.  They didn't create them.  So they see them as a drop-in turnkey solution, which they configure and install, wire up, plug in, power up, and then forget.  They just assume that they will continue working correctly until they unplug and retire the device.  The problem is, in a sprawling organization with thousands of routers and switches spread across this continent and others, where every device is receiving periodic updates from its manufacturer, practically, from a practical standpoint, keeping everything updated, with the risk, as we know, that is also there that an update might cause more trouble than the "potential trouble" which, you know, is unrealized, but this could be a problem.
+
+So you're being asked to update something that might break something that's working because maybe something bad could happen if you don't.  So asking the client owners of these devices to be completely responsible for them is, unfortunately,  the best we've managed to come up with so far.  And this Salt Typhoon mess clearly demonstrates that this is not working.  We've talked about having devices phoning home for updates.  But that's also risky since it opens the door for a failed update to break a perfectly working system, even when it might only be theoretically vulnerable.
+
+And it's interesting.  I had an outage of my residential network about a week and a half ago, I guess.  And I was aware of it pretty quickly because things quickly stopped working, and I thought, what's going on?  So I ran to the closet where that equipment is located and caught the tail end of my Asus router rebooting itself after it updated.
+
+LEO:  Oh.  Ah.
+
+STEVE:  So on one hand, that was good, and I gave it permission to do that, and I said yes, you know, even, I mean, and I'm doing it more from a - in the same way that Jerry Pournelle used to try dumb things so that his users and listeners didn't have to, I don't need my Asus router to reboot.  It's behind a second pfSense router that is bulletproof.  But I wanted to experience, you know, turning on automatic updates, which I've been preaching for routers.  But here it did.  It chose to update at, for some reason, not at 3:00 a.m., but in the early evening.  And so it created a problem.  It solved itself, too.  But still, you can understand why in a high-end big iron telecom environment, they don't want Cisco reaching in and updating their equipment.
+
+LEO:  No.  We've got work to do here, yeah.
+
+STEVE:  Right.
+
+LEO:  My Comcast business modem that we use for the shows kept dying.  And Russell, our MSP, called them, and they said, oh, yeah, there's a problem with the firmware.  We're going to update the firmware and reboot it.  And they did, and it fixed it.  But you're right.  I mean, and that's a business device.  So they didn't do it automatically.  We had to call them and say there's a problem.  And they said yes, we know, and we're going to fix it for you.  So, yeah.  But you don't want it to kind of, oh, you're down this week?  Oh.
+
+STEVE:  Right.
+
+LEO:  Guess we won't have to sell widgets this week.
+
+STEVE:  So given everything we've just said, this leaves us with only one solution that I can think of, impractical though it may be.  And it's going to sound ludicrous; but really, I mean, if you just - if you do the math, and that is for brand new devices that are sold, to never contain any exploitable vulnerabilities from the start, from day one.  Nor to have any introduced downstream through updates.
+
+Now, given the realities of after sales,  I mean, I know how that sounds.  Given the realities of after sales maintenance that we keep seeing in the real world, expecting reliable after sales patching of exploitable vulnerabilities, which is the way we're operating today, it's not reasonable.  I mean, it is not a reasonable thing to ask.  And it doesn't happen.  I mean, even where organizations, IT people kind of have this uncomfortable feeling that keeps them up at night that they really should be, you know, more on top of this, it doesn't happen.
+
+So if that's the case, it leads to the inexorable conclusion that never deploying any insecure hardware is the only way that we're going to have security in the field.  Now, of course, the world has become accustomed to the idea that it is not possible, just not possible to have flawless software.  And that might be true in 2025.  But it can also be a matter of degree.  Recall that when we went through - remember back, it was about 10 years ago, we went through a period where Cisco was apparently "discovering," I'd have that in air quotes, unknown backdoor accounts that had been left in their own products.
+
+LEO:  Yeah.  That's not good.
+
+STEVE:  And it's like, what?
+
+LEO:  We could do better than that.
+
+STEVE:  It's like, you know, it should be ludicrous to imagine that any company such as Cisco would not be sufficiently aware of the contents of their own firmware to know that built-in accounts might be present.  How could they be discovering them in the field?  Oh, whoa.  What do you know.  Bad guys are leveraging an account that we left in by mistake.  What?  Anyway, hopefully, as I said at the time, they actually did know that those accounts were present and that, you know, they were there due to a maintenance policy that had not aged well.  Now, we've often talked about policies that do not age well.  Inertia likely kept that policy in place until the malicious abuse of those hidden backdoor accounts indirectly exposed that policy and forced its reevaluation.  Suddenly Cisco was surprised, oh, by the presence of those accounts.  Right.
+
+But my point is things are better today.  And I suspect that things will be even better in the future than they have been recently.  You know, I think things are improving.  I think we really need to keep in mind how slowly and reluctantly things change.  We're seeing the consequences today of decisions and policies that are a decade old, with hardware and firmware that was in place long before the need for much stricter and stronger security was widely appreciated.
+
+Vulnerable hardware that's not patched continues to present the significantly weaker security profile that was in use and acceptable at the time of that hardware's original design.  It is still there, in use, and it's 10 years old.  It would not be designed today the way it was designed then.  But because of this refusal to update, refusal to patch - and in some cases, right, these old systems go end of life.  They're still working.  But so you can't get a patch for them any longer.  Their manufacturer has withdrawn support.  Yet the packets are still flowing.
+
+LEO:  You said something, though, that's pretty provocative.  Is it possible to ship flawless software?
+
+STEVE:  We have to.
+
+LEO:  How?
+
+STEVE:  Well, the shuttle computer famously had no bugs.  It was expensive to create the software, but it didn't have any bugs because it couldn't.
+
+LEO:  It couldn't.
+
+STEVE:  I mean, it literally could not have a bug.
+
+LEO:  You can't send a repairman up to fix it.
+
+STEVE:  Or we would have flown those guys into the sun by mistake.
+
+LEO:  Right.
+
+STEVE:  So, and we know that, like Microsoft, how many tens of thousands of bugs did Windows have when it shipped?  Remember?  Famously?  I mean, so...
+
+LEO:  They knew, yeah.  It was already - yeah.
+
+STEVE:  Yes.  They had a list.
+
+LEO:  Right.
+
+STEVE:  And they said, well, these aren't that bad, and it only happens on Tuesday if some guy's standing on his right foot and clicks a left-handed mouse three times.  I mean, okay, so we'll let that one go.
+
+LEO:  Well, that's kind of the problem.  I mean, Windows is a general purpose program, significantly I think more difficult to make perfect than, say, a space shuttle.
+
+STEVE:  Well, or a router.  A router...
+
+LEO:  A router you could make perfect.  You're right.
+
+STEVE:  [Crosstalk] coming back.  I've got some very pointed things...
+
+LEO:  That's a good point, yeah.
+
+STEVE:  ...to say to Cisco by the end of today's podcast because what was done, what was found, should have never been possible.
+
+LEO:  Yeah.
+
+STEVE:  We're going to talk about the unfortunate state of healthcare website portals after this next break.
+
+LEO:  Oh, that'll be fun.
+
+STEVE:  Oh, Leo.  Oh.
+
+LEO:  I can't wait for that.  States are not good about healthcare privacy?  What's this?
+
+STEVE:  Oh, boy.  The publication "The Markup" has the tag line "Challenging technology to serve the public good," which is their mission.  And I would agree with the need for more of this sort of tech-savvy investigation and public airing of widespread misbehavior.  Here's what their reporting last Wednesday found.  The headline of their most recent investigation was "We caught four more states" - and we'll be looking back retrospectively, too, at what they'd found previously - "sharing personal health data with Big Tech."  And the subhead was "Healthcare exchanges in Nevada, Maine, Massachusetts, and Rhode Island shared users' sensitive health data with companies like Google and LinkedIn."  And of course, you know, begs the question, what, four more?  On top of what?
+
+So here's what they reported.  They said:  "State-run health care websites around the country, meant to provide a simple way to shop for insurance, have been quietly sending visitors' sensitive health information to Google and social media companies."
+
+LEO:  Oh, man.
+
+STEVE:  "The data, including prescription drug names and dosages, was sent by web trackers on state exchanges set up under the Affordable Care Act to help Americans purchase health coverage.  The exchange websites ask users to answer a series of questions, including about their health histories, to help find them the most relevant information on plans.  But in some cases, when visitors responded to sensitive questions, the invisible trackers sent that information to platforms like Google, LinkedIn, and Snapchat."
+
+And in their reporting they have some screenshots of asking someone to select, to enter the drug name that they're interested in and then select the dosage.  And in this case, when an individual indicated that they took Fluoxetine, commonly known as Prozac, on the Nevada Health Link site, that information was sent to LinkedIn.  So they wrote...
+
+LEO:  Good.  Add that to my rsum, would you?  Geez, Louise.
+
+STEVE:  It's unbelievable, Leo.  Just wait, though.  It's so bad.  They wrote:  "The Markup audited the websites of all 19 states that independently operate their own online health exchanges.  While most of the sites contained advertising trackers of some kind, The Markup found that four states exposed visitors' sensitive health information.  Nevada's exchange, Nevada Health Link, asks visitors about what prescriptions they use, including the names and dosages of the drugs, to help them find their best options for health insurance.  When visitors start typing, it suggests specific medications, right, to help them spell them correctly, including antidepressants, birth control, and hormone therapies.
+
+"As visitors answered the questions, their responses were sent to LinkedIn and Snapchat, according to tests conducted by The Markup in April and May.  On the other side of the country, Maine's exchange, CoverME.gov, sent information on drug prescriptions and dosages to Google through an analytics tool.  It also sent the names of doctors and hospitals that people had previously visited.  Rhode Island's exchange, HealthSource RI, sent prescription information, dosages, and doctors' names to Google.  Massachusetts Health Connector, another exchange, told LinkedIn whether visitors said they were pregnant, blind, or disabled.  After being contacted by The Markup, Nevada's health exchange stopped sending visitors' data to Snapchat, and Massachusetts stopped sending data to LinkedIn.
+
+"Additionally, The Markup found that Nevada stopped sending data to LinkedIn in early May, as they were testing.  The Markup discovered the sharing after finding that California's exchange, known as Covered California, told LinkedIn when a visitor indicated they were blind, pregnant, or a victim of domestic violence. 
+
+"Security and privacy experts said state health exchanges' use of advertising trackers is troubling, if not particularly surprising.  Such tools can help organizations to reach visitors and tailor ads for them."  And I'll just say, why do we need ads on state healthcare sites?  "Google Analytics," they wrote, "allows website operators to better understand who's coming to their site and to optimize advertising campaigns.  The LinkedIn and Snapchat trackers, like a similar offering from Meta, help companies target their social media ads.  Nevada uses the trackers to help target marketing at uninsured residents, according to Russell Cook, Executive Director of the state agency that operates Nevada's exchange, Silver State Health Insurance Exchange.
+
+"But health care services need to be especially careful with those tools, said John Haskell, a data privacy attorney who has previously worked as an investigator for the Department of Health and Human Services.  Haskell said:  'It doesn't surprise me that organizations that have these massive tech stacks that rely on third-party resources don't have a full understanding of what the configuration is, what the data flows are, and then once they go to somebody, what that data is being used for.  It's something that needs to be addressed.'"  In other words, as I think evidenced by the fact that the sites that were contacted by The Markup said, whoops, sorry, and like discontinued this, it wasn't deliberate.  It was just naive.  It was just dumping trackers on websites, not recognizing what the privacy consequences were for sites that are transacting sensitive data.
+
+They said:  "After The Markup reported on Covered California's sharing of health data with LinkedIn, the exchange" - meaning Covered California - "removed its trackers and said it would review its data practices.  The news triggered a class-action lawsuit and questions from federal lawmakers.  The Markup then examined websites operated by 18 states other than California, as well as Washington, D.C., to see what information they shared as users navigated them.  The sites were established under the Affordable Care Act, which requires states to offer health insurance either through their own exchanges or one operated by the federal government."  And of course we all remember back at the time the crazy scramble to get these websites online and that there were problems and delays, and they were crashing and not working and, you know, government meets computer.
+
+"To test them," they wrote, "we first ran the sites through Blacklight, a tool we developed [we The Markup developed] to reveal web trackers.  We then reviewed network traffic on the sites to see what data the trackers received when visitors filled out forms.  The results showed that 18 used some sort of tracker.  Some were filled with them.  Nevada, for example" -  Leo, are you sitting down?
+
+LEO:  Yes.
+
+STEVE:  "Nevada, for example, used nearly 50."  Fifty trackers.
+
+LEO:  Hey, healthcare ain't free, buddy.
+
+STEVE:  Somebody's got to pay for it.
+
+LEO:  Yeah.
+
+STEVE:  "By contrast," they said, "Blacklight found no tracker of any kind on Washington, D.C.'s exchange.  Popular websites use on average seven trackers, according to Blacklight scans of the 100,000 most trafficked [not trackered] sites on the web.  Many of the sites used trackers in relatively innocuous ways, like counting page views.  The four exchanges" they said, "we found sharing sensitive health data sent varied responses to questions about the tracking.  Cook said in a statement that trackers placed by his Nevada agency were 'inadvertently obtaining information regarding the name and dosage of prescription drugs.'"  Whoops.
+
+LEO:  It was an accident.  It was inadvertent.
+
+STEVE:  We didn't mean it.  "And sending it to LinkedIn and Snapchat."  Wow.  And you know that these aggregators, they're just sucking anything in they can get their hands on.
+
+LEO:  Oh, yeah.  Oh, they're thrilled.  This is exactly the kind of information they love.
+
+STEVE:  Prozac?  Yay.  Okay.  "Cook acknowledged such data was 'wholly irrelevant to our marketing efforts'" - you think? - "'and said it had disabled tracking software pending an audit.'
+
+"Jason Lefferts, a spokesman for Massachusetts Health Connector, said in a statement that 'personally identifiable information is not part of the tool's structure; and no personally identifiable information, not even the IP address of the users of the tool, has ever been shared with any party in any way via this tool.'"  Uh-huh.
+
+"But LinkedIn's tracker documentation makes clear that it correlates the information it receives with specific LinkedIn accounts so companies can use the data for features like retargeting website visitors."
+
+LEO:  Of course.
+
+STEVE:  The company's documentation also states it later obscures this information and eventually deletes it.
+
+LEO:  Oh, sure.  Yeah.
+
+STEVE:  Right.  So if this spokesperson in Massachusetts believes what he's saying about no IP addresses, he just may not understand how trackers operate.  You know?  I mean, it's possible; right?
+
+LEO:  He doesn't understand how the Internet operates.
+
+STEVE:  Right, exactly.  The hosting website page provides some script, or at least a URL to the tracker's home.  When loaded, when the script is loaded, that causes the user's browser to fetch something from the tracking site, and that immediately reveals their public IP address.
+
+LEO:  Of necessity.
+
+STEVE:  Yes.  Anyone who imagines that a facility that was established for the sake of tracking will not be capturing and logging that IP has not been paying attention.
+
+The Markup's article continues:  "Spokespeople for the Rhode Island and Maine health exchanges said that they pay a vendor, Consumers' Checkbook..."
+
+LEO:  Well, there you go.  What could possible go wrong?
+
+STEVE:  "...to run a separate site that allows visitors to explore what plans are available to them through their states' exchanges."
+
+LEO:  What?
+
+STEVE:  So they subbed it out.  "It was from these sites," they wrote, "that sensitive information was shared to Google.  Consumers' Checkbook's sites are at a different web address than the exchange sites, but are prominently linked to on the exchange sites and display identical branding like the state health exchange's logo, making it unlikely that an average visitor would realize they were no longer on the state-run domain."  Right.  And saying that it's not our fault because our health management subcontractor is doing something wrong, you know, that doesn't do much to avoid those pesky class-action lawsuits.
+
+"Christina Spaight O'Reilly, a spokesperson for HealthSource RI (Rhode Island), said the company uses Google Analytics to study trends, but not to serve ads, and 'disables Google Signals Data Collection, ensuring that no data is shared with Google Ads for audience creation or ad personalization, and no session data is linked to Google's advertising cookies or identifiers.'  HealthSource RI's terms of use mention the use of Google Analytics, she noted.  A spokesperson for CoverME.gov made similar points, saying that the agency 'does not collect or retain any data entered into the tool.'"  Right.
+
+But again, The Markup's independent testing found 10 ad trackers to which "medication names and dosages, doctors, and hospitals" were being leaked.  So this tells us that these spokespeople are, in the best case, well, I guess it's a mixed bag, clueless.  But that either way, anything they claim should be treated as, here's an acronym for you, PR BS, and independently verified by actual traffic analysis, which is exactly what these Markup guys did.
+
+They wrote:  "Consumers' Checkbook, the subcontractor in two cases, declined to comment beyond the exchanges' comments.  All of the exchanges said that individually identifiable health information, like names and addresses, was not sent to third parties.  But the point of the trackers is to enhance information" - this is them - "enhance information sent about a user with data the platforms already have on that user."
+
+And as we know, they're aggregators.  "And every tracker," they wrote, "found by The Markup logged details about individual visitors, such as their operating system, IP, browser, device, and times of visit.  In response to requests for comment, the tech companies whose trackers we examined uniformly said they do not want organizations sending them potentially sensitive data, and that doing so is against their terms of use."  Oh, that's right, don't sent it to us.  But, you know, if you do, well, we've got to log it because it came in, and we'll have to look at it later.  We'll get around to that.  Right.
+
+"Steve Ganem, Director of Product Management for Google Analytics, said 'by default any data sent to Google Analytics does not identify individuals, and we have strict policies against collecting Private Health Information or advertising based on sensitive information.'  A spokesperson for LinkedIn, Brionna Ruff, said that advertisers are not allowed 'to target ads based on sensitive data categories,' such as health issues.  A spokesperson for Snapchat owner Snap said the same, noting that sending purchases of supplies like prescriptions would run afoul of the company's rules about sensitive data.
+
+"A Google Analytics information page specifically discusses how organizations that use the company's tools should comply with the Health Insurance Portability and Accountability Act," of course known as HIPAA, "which protects health data.  The page notes that 'Google makes no representations that Google Analytics satisfies HIPAA requirements' themselves."
+
+LEO:  That's on you, buddy.
+
+STEVE:  That's right.  "It's important to ensure that your implementation of Google Analytics and the data collected about visitors to your properties satisfies all applicable legal requirements," says Google's page.
+
+So, okay.  There are several trackers that we would hope would be more responsible.  But The Markup's report listed the number of ad trackers discovered on the state healthcare portals they examined.  In order of decreasing tracker count, California took dubious first place with 63 trackers.
+
+LEO:  Oh, ho.  Whoa.
+
+STEVE:  You betcha.  The Golden State, we're going to...
+
+LEO:  Well, I have family members on the California ACA.
+
+STEVE:  This is on the Covered California, yeah, state-sponsored Affordable Care Act portal, 63 trackers.
+
+LEO:  Yeah, holy cow.
+
+STEVE:  That was followed by Nevada with 49; Maryland with 31; Massachusetts with 28; Georgia with 16; New Mexico, Colorado, New York, and New Jersey each having 15; Pennsylvania with 14 trackers; Maine with 12; the state of Washington, Rhode Island and Idaho each holding 10.
+
+LEO:  Merely 10.
+
+STEVE:  Yeah.  Connecticut and Virginia with nine each, Kentucky with four, Minnesota with two, and Vermont with just one.  And as the article noted, Washington, D.C.'s site somehow had not a single one.
+
+LEO:  How do they do it without tracking?
+
+STEVE:  That's a model to follow, yes.  Wow.  The Markup's investigation finishes by noting:  "State exchanges aren't the only health sites that have sent medical information to social media companies.  In 2022, The Markup revealed that dozens of hospital websites shared information with Facebook's parent company Meta through a tool called the Meta Pixel.  And, of course, we were just talking about the infamous Meta Pixel since that's the thing that was connecting to a local device Meta app on the localhost IP for the sole purpose of deanonymizing them to every instance of the Meta Pixel appearing on the web, such as, apparently, any of dozens of hospital websites they might have the occasion to visit, which was sending sensitive information to Facebook."
+
+LEO:  Wow.
+
+STEVE:  "The hospitals faced scrutiny from Congress and legal action," says The Markup.  "Another Markup investigation found trackers logging information about online drugstore visitors purchasing HIV tests and Plan B."  So what could possibly go wrong with that?
+
+They said:  "In 2023, a New York hospital agreed to pay a $300,000 fine for violations of the Health Insurance Portability and Accountability Act, HIPAA.  In response to a series of incidents, the Department of Health and Human Services said in 2023 that use of social media trackers to log health information could violate HIPAA, although recent court decisions have narrowed how the law can be applied against companies that use those trackers.
+
+"Some plaintiffs have used state laws, like those in California, to argue that they should be compensated for having their health data sent to third parties without their consent.  Others have argued that this kind of tracking runs afoul of wiretapping and even racketeering laws."
+
+So they end with a quote from John Haskell, that data privacy attorney who had previously worked as an investigator for the Department of Health and Human Services, who now advises clients to be very careful about the information they track on their sites.  He said:  "Organizations are not investing enough time and resources into properly vetting everything they do.  Organizations saying they did not understand the consequences of the tools they're using will not be seen as an effective defense."
+
+So what does this mean for consumers who need to use and trust the privacy of these sites?  In practice, it means that the advertising, tracking, and profiteering that has become the true underlying fabric of the web has shredded privacy and made a complete joke of any guarantees of a site's claim of HIPAA compliance.  The only thing the Covered California site is covered in is tracking technology.  And notice that none of it, not a single bit of it, is about doing the job that the site is there to do for us.
+
+As I said at the top, I am very glad that groups such as The Markup are there to keep bringing these egregious privacy failures to light.  I'm glad they're asking states what is going on, and that class-actions are being brought against anyone who is making a mockery of HIPAA.  Again,, this is all going to get better over time, but only if it is forced to do so.  And unfortunately, you know, well, fortunately we have organizations like The Markup to do the forcing.
+
+LEO:  Yeah.
+
+STEVE:  That's a good thing.  While we're on the topic of Passkeys - we're on the topic of Passkeys?  No.
+
+LEO:  You mentioned them.  You mentioned - you said the word.
+
+STEVE:  I think I changed the order of this.  We do have something about that.  But I did want to mention an announcement during the recent Apple Worldwide Developer Conference regarding their support for Passkeys was significant.  For that and for a bit of additional background, let's turn to Ars Technica's Dan Goodin, who posted under the headline:  "Coming to Apple OSes:  A seamless, secure way to import and export Passkeys."  The subhead he gave it was "Apple OSes will soon transfer Passkeys seamlessly and securely across platforms."
+
+Dan wrote:  "Apple this week provided a glimpse into a feature that solves one of the biggest drawbacks of Passkeys, the industry-wide" - what Passkeys?  And he's adding is "the industry-wide standard for website and app authentication that is not susceptible to credential phishing and other attacks targeting passwords."  He said:  "The import/export feature, which Apple demonstrated at this week's Worldwide Developer Conference, will be available in the next major releases of iOS, macOS, iPadOS, and visionOS.  It aims to solve one of the biggest shortcomings of Passkeys as they have existed to date.
+
+"Passkeys created on one operating system or credential manager are largely bound to those environments.  A Passkey created on a Mac, for instance, can sync easily with other Apple devices connected to the same iCloud account.  Transferring them to a Windows device, or even a dedicated credential manager installed on the same Apple device, has been impossible.
+
+"That limitation has led to criticisms that Passkeys are a power play by large companies to lock users into specific product ecosystems.  Users have also rightly worried that the lack of transferability increases the risk of getting locked out of important accounts if a device storing Passkeys is lost, stolen, or destroyed.  The FIDO Alliance, the consortium of more than 100 platform providers, app makers, and websites developing the authentication standard, has been keenly aware of the drawback and has been working on programming interfaces that will make the Passkey syncing more flexible.
+
+"A recent teardown of the Google password manager by Android Authority shows that developers [Google] are actively implementing import/export tools, although Google has yet to provide any timeline for their general availability."  And he has in parens, "(Earlier this year, the Google password manager added functionality to transfer passwords to iOS apps, but the process is clunky.)"  He said:  "A recent update from FIDO shows that a large roster of companies are participating in the development, including Dashlane, 1Password, Bitwarden, Devolutions, NordPass, and Okta.
+
+"The narrator of the Apple announcement video says:  'People own their credentials and should have the flexibility to manage them where they choose.  This gives people more control over their data and the choice of which credential manager they use.'
+
+"The transfer feature," writes Dan, "which will also work with passwords and verification codes, provides an industry-standard means for apps and OSes to more securely sync these credentials, as the video explains."  He then quotes the video, saying:  "This new process is fundamentally different and more secure than traditional credential export methods, which often involve exporting an unencrypted CSV or JSON file, then manually importing it into another app.  The transfer process is user initiated, occurs directly between participating credential manager apps, and is secured by local authentication like Face ID.
+
+"This transfer uses a data schema that was built in collaboration with the members of the FIDO Alliance.  It standardizes the data format for Passkeys, passwords, verification codes, and more data types."  To which I say hallelujah!
+
+It finishes:  "The system provides a secure mechanism to move the data between apps.  No insecure files are created on disk, eliminating the risk of credential leaks from exported files. It's a modern, secure way to move credentials."  And needless to say, this podcast will have a full technical readout on this shortly.
+
+LEO:  Yay.
+
+STEVE:  Dan finished, saying:  "The push to Passkeys is fueled by the tremendous costs associated with passwords.  Creating and managing a sufficiently long, randomly generated password for each account is a burden on many users, a difficulty that often leads to weak choices and reused passwords.  Leaked passwords have also been a chronic problem.
+
+"Passkeys, in theory, provide a means of authentication that's immune to credential phishing, password leaks," blah blah blah.  Anyway, we know all about Passkeys.  We've talked about them ad infinitum.  And Dan gets the explanation exactly right, explaining that it's a switch to a public key crypto system. 
+
+Anyway, I am super happy.  We knew that FIDO was working on this.  We knew that there was going to be a specification.  We didn't know who was going to adopt it.  Right?  Because just saying that FIDO has a means, you know, an official specified means for allowing Passkey transport doesn't mean that everybody's going to adopt it.  The fact that Apple has arguably one of the most closely held ecosystems is a really great sign.  So that is just super news.  That means that it will be possible to finally, you know, we're not going to have dynamic Passkey syncing like across the Apple boundary.  But at least we'll be able to take all the Passkeys we've created inside and outside of Apple and send them in both directions in order to create a single composite.  So that's just - that's super welcome news.
+
+And Meta, by the way, also just announced that Facebook login is being enhanced with Passkeys.  And Leo, I heard you recently somewhere commenting that you were seeing, you were really happy...
+
+LEO:  More and more.
+
+STEVE:  ...to be seeing passwords, yeah, Passkeys being much more widely adopted across the industry.
+
+LEO:  Yeah, yeah.  Fastmail now uses it.  Google uses it.  I use it for my Google accounts, Meta.  Yeah, it's good.  I mean, it's starting to get to the point where you can actually say, oh, good, I can just login quickly.
+
+STEVE:  Yup.
+
+LEO:  The only thing that really bugged me, and I can't remember what it was, I had a - I think it was Amazon.  I did Passkeys, and then it say, okay, but you still have to give us the six-digit one-time password.  And it's like, dudes, no.  You shouldn't - right?
+
+STEVE:  No, what part of this do you not understand?
+
+LEO:  Yeah.  There's no point in that.  Right?  Am I wrong?
+
+STEVE:  That is correct, because you're talking about secure biometrics that are being used to unlock the user's private key.
+
+LEO:  It's so weird.  Like Amazon you would think would understand this.  But no.  I do the Passkey, and it says, okay, now...
+
+STEVE:  I guess the only problem...
+
+LEO:  Huh?
+
+STEVE:  The only problem would be as, for example, password managers that don't enforce biometrics...
+
+LEO:  Right.
+
+STEVE:  ...begin to do Passkeys, then if somebody else got a hold of that, then you might still want to send something to their phone or use an external authenticator in order to, you know, get further verification.  So there's a little bit of belt and suspenders on it.  But I agree.
+
+LEO:  They're the only one that I've seen do it.
+
+STEVE:  What you really want is just seamless authentication.
+
+LEO:  Yeah.  It completely, I mean, then I might as well give you a password, if that's what you're going to do.
+
+STEVE:  Right, right.
+
+LEO:  All right.  And back we go to Mr. Steve Gibson to continue.  Yes.
+
+STEVE:  Okay.  So I mentioned at the top of the show, I'll just say it again, and I know that you were talking about this previously, Leo.  TikTok has had its end of life extended again.
+
+LEO:  Another 90 days.
+
+STEVE:  This is the third time it gets another 90 days.  And as I understand it, they're trying to finish negotiating with China to allow some U.S. consortium to purchase it and run it like Oracle or something.
+
+LEO:  Yeah, but I don't think that's going to happen.  They're trying to - I think what they're really trying to do is strong-arm China with the tariffs.  But China doesn't really kind of take to that too well.
+
+STEVE:  No.  So far.
+
+LEO:  So we'll see.  But also the President really likes TikTok, so I don't think they're going to ban it, either.
+
+STEVE:  Yeah.  Yeah.  Well, and it's good for all the TikTokers who don't want to lose that platform.  It's like...
+
+LEO:  Right.  But you, you know, you heard on Sunday Jason Calacanis said something that actually struck me.  He said:  "Do you think if we could figure out an app to make the Chinese citizens use, that maybe we would be able to get information about half of them and reach them via content?  Would we do it?"  Yeah.  So that kind of - that catalyzed it for me, the real advantage to the Chinese Communist Party of owning TikTok.  Because they do.
+
+STEVE:  Yeah.  They have a huge social media platform in the U.S.
+
+LEO:  In the U.S.  Huge influence operation.
+
+STEVE:  Okay.  One more little piece of sort of prefacing Salt Typhoon information.  Canada has become the first specifically known non-U.S. victim of Salt Typhoon's Cisco-based attacks.  I should explain that the following news was just declassified after I had chosen and completely written the coverage of today's main topic, which is Salt Typhoon.  After I did that, I went back looking for other stuff, and it's like, whoa, now Canada.  So the details of the technology underlying these devastating and pervasive attacks are what we will get to.  So here's the news that just broke yesterday as I was wrapping up this week's show notes.
+
+"The Canadian Centre for Cyber Security" - their so-called Cyber Centre - "and the United States' FBI are warning Canadians of the threat posed by People's Republic of China (PRC) state-sponsored cyber threat actor being tracked as Salt Typhoon.  The Cyber Centre previously joined our partners" - oh, this is an actual announcement from the Canadian Centre for Cyber Security.  They're the voice of this announcement.  So they said:  "The Cyber Centre previously joined our partners in warning that PRC cyber actors have compromised networks of major global telecommunications providers to conduct a broad and significant cyber espionage campaign.  This cyber bulletin aims to raise awareness of the threat posed by PRC cyber threat activity, particularly to Canadian telecommunications organizations, in light of new Salt Typhoon-related compromises of entities in Canada.
+
+"The Cyber Centre is aware of malicious cyber activities currently targeting Canadian telecommunications companies.  The responsible actors are almost certainly PRC state-sponsored actors, specifically Salt Typhoon."  They said:  "Three network devices registered to a Canadian telecommunications company were compromised by likely Salt Typhoon actors in mid-February of 2025."  So three devices that they're aware of.  The actors exploited CVE-2023-20198 to retrieve the running configuration files from all three devices and modified at least one of the files to configure a GRE, which is an encrypted form of tunnel, enabling traffic collection from the network.  And at the end of the show we're going to be looking at the actual Cisco commands that were used, which have been seen in use.
+
+"In separate investigations," they wrote, "the Cyber Centre has found overlaps with malicious indicators associated with Salt Typhoon, reported by our partners and through industry reporting, which suggests that this targeting is broader than just the telecommunications sector."  And why wouldn't it be?  "Targeting of Canadian devices may allow the threat actors to collect information from the victim's internal network, or use the victim's device to enable the compromise of further victims."  In other words, you know, pivoting.  "In some cases, we assess that the threat actors' activities were very likely limited to network reconnaissance.
+
+"While our understanding of this activity continues to evolve, we assess that PRC cyber actors will almost certainly continue to target Canadian organizations as part of this espionage campaign, including telecommunications service providers and their clients, over the next two years.  To monitor and mitigate this threat, we encourage Canadian organizations to consult the guidance linked below on hardening networks, security considerations for edge devices, and additional cyber threat information pertaining to the PRC.
+
+"Telecommunications networks are almost certainly among the highest priority espionage targets for state-sponsored cyber threat actors.  Hostile state actors very likely rely on access to telecommunications service providers and telecommunications networks around the world as a key source of foreign intelligence collection."  In other words, it's really bad that this is where the PRC is.  It's not inside some random enterprise somewhere.  They're in the heart of telecommunications backbone for, in this case, Canada.  They said:  "TSPs (Telecommunications Service Providers) carry telecommunications traffic and collect and store large amounts of customer data that have intelligence value, including communication, location, and device data.
+
+"State-sponsored cyber threat actors have persistently compromised TSPs globally, often as part of broad and long-running intelligence programs to exfiltrate bulk customer data and collect information on high-value targets of interest, such as government officials.  This includes geolocating and tracking individuals, monitoring phone calls, and intercepting SMS messages.  State actors have gained access to telecommunications networks and data by exploiting vulnerabilities in network devices such as routers, and by taking advantage of insecure design in the systems that route, bill, and manage communications.
+
+"In 2024," so last year, "partner investigations discovered that PRC state-sponsored cyber threat actors had compromised the networks of major global TSPs (Telecommunications Service Providers), including U.S. wireless carriers, very likely as part of a targeted espionage operation.  According to our partners, the actors were able to steal customer data call records from the compromised TSPs.  The threat actors also collected the private communications of a limited number of individuals primarily involved in government or political activity.
+
+"We are concerned with the potential impacts to the sensitive information of client organizations working directly with telecommunications providers.  PRC cyber threat actors frequently attempt to compromise trusted service providers, including telecommunications, managed service providers, and cloud service providers, to access client information or networks indirectly.  PRC cyber actors exploit vulnerabilities in edge devices."
+
+They finish, saying:  "As we noted in the National Cyber Threat Assessment 2025-26, cyber threat actors are exploiting vulnerabilities in security and networking devices."  And let me just say these are not unknown vulnerabilities.  That's what's so galling about this.  These are long known vulnerabilities which we'll be talking about in detail shortly.  They said:  "...that sit at the perimeter of networks, including routers, firewalls, and virtual private network solutions.  By compromising these edge devices, a cyber threat actor can enter a network, monitor, modify, and exfiltrate network traffic" - and we're going to look at the commands they used - "flowing through the device, or possibly move deeper into the victim network.
+
+"As part of this campaign, PRC cyber actors are targeting these network devices, exploiting existing vulnerabilities to gain and maintain access to TSPs.  Despite public reporting outlining their activities, it is very likely that the actors continue to operate."  In other words, as we've seen, tangentially and parenthetically, the people in the know say we don't think we got rid of them.  You know, you'll see Verizon saying, oh, don't worry about it, we've got, you know, we're all clear.  We have expunged them from our network.  They don't know that.
+
+So this alert managed to get a great deal of the facts correct, and it nicely serves to place these Salt Typhoon attacks into the foreground again, where I think it's clear they still belong.  There's an understandably strong desire, especially on the part of the many identified victim companies from a public relations standpoint, to loudly proclaim that the dastardly bad guys have been found and evicted with prejudice.  But by the end of today's podcast, everyone here is going to appreciate why this is a claim that these companies would have a difficult time substantiating.  They really don't have the ability to say that.
+
+"Removal of unwanted drivers from Windows Update" was the headline of last Thursday's announcement from Microsoft.  We'd briefly touched on this before when it was something Microsoft was considering doing.  And it's good, but it's also dangerous because what's an unwanted or unneeded driver?  You know, there's a lot of machines in the closet, and people still using, what was that bar scanning cat thing?
+
+LEO:  Oh, the CueCat, yeah.
+
+STEVE:  The CueCat.
+
+LEO:  Who could forget the CueCat?
+
+STEVE:  Right.  You know, I'm sure there's some out there still.
+
+LEO:  Yeah, I'm sure there are.
+
+STEVE:  One of the Pictures of the Week shows, I think it's a bakery or a doughnut shop or something, operating today...
+
+LEO:  No.
+
+STEVE:  A contemporary picture with Commodore 64 cash registers.
+
+LEO:  Oh, wow.  Well, if I works, why replace it?
+
+STEVE:  Right.  Okay.  So...
+
+LEO:  And you can play Star Raiders on it.  So there's that.
+
+STEVE:  That's right.  Or...
+
+LEO:  Oregon Trail.
+
+STEVE:  Space Invaders.
+
+LEO:  Yeah, right.
+
+STEVE:  Okay.  So Microsoft wrote:  "This blog post is intended to notify all Windows Hardware program partners, that is, the people who submit hardware drivers to Microsoft, that Microsoft has taken a strategic initiative to clean up legacy drivers published on Windows Update to reduce security and compatibility risks."  Reduce the risks brought by security and compatibility problems.  They said:  "The rationale behind this initiative is to ensure that we have the optimal set of drivers on Windows Update that cater to a variety of hardware devices across the Windows ecosystem, while making sure that Microsoft Windows' security posture is not compromised.  This initiative involves periodic cleanup of drivers from Windows Update, meaning removal, thereby resulting in some drivers not being offered to any systems in the ecosystem.  Further details of the effort are as follows."  Then they switch into a Q&A format.
+
+So they ask themselves:  What category of drivers are targeted in the first cut of the cleanup?  And they answer:  The first phase targets legacy drivers that have newer replacements already on Windows Update.  So why would you use an older obsoleted driver when there's a newer replacement?  So that seems like a safe thing to do.  And that's the approach Microsoft is taking is, you know, let's try not to break anything while we do this.
+
+Next question:  What does "cleanup" mean in this context?  They say:  Cleanup here refers to the process of expiring drivers so that they are no longer associated with an audience in Windows update, resulting in them not being offered to any system.  Technically, expiring a driver means removing all its audience assignments in Hardware Development Center, which stops Windows Update from offering that driver to devices.
+
+Can partners republish a driver that was expired by Microsoft?  Yes, partners will be able to republish the drivers that were expired.  Microsoft may require business justification as to why there was a need for republishing.  It's like, hey, CueCat, I need my CueCat.
+
+What happens to the cleaned-up drivers?  After the expiry, Microsoft will publish a blog post mentioning the end of the first cut of driver expiry.  After that, there will be a six-month window for partners to get back with concerns, if any.  If no action is taken, the drivers will be permanently removed from Windows Update.
+
+Will this be a one-time exercise, or will similar instances occur in the future?  This is meant to be a regular exercise to optimize what Windows Update has to offer.  We're beginning with the above-mentioned category of drivers, but will expand to cover more categories of drivers that Microsoft deems fit to be expired from Windows Update.  Each time such a cleanup occurs, Microsoft will communicate broadly so that partners know what to expect.
+
+Given the history of BYOVD - remember that's Bring Your Own Vulnerable Driver - being successfully used by bad guys, being proactive about removing an otherwise endlessly growing collection of old and aging drivers, many of which are probably now just taking up space, to me it makes a lot of sense.
+
+They concluded this by writing:  "In summary, Microsoft removing legacy drivers from Windows Update is a proactive measure to safeguard security and improve driver quality for Windows users.  As a partner, you should review your drivers in the Hardware Program, be aware of what your current drivers in the ecosystem are, and make sure that any unwanted legacy driver is proactively expired from Windows Update.  Moving forward, we expect this cleanup to be a routine practice, and prepare for the introduction of new publishing guidelines that will help all Windows users keep their systems in a secure and reliable state.  We appreciate your cooperation in this initiative, as it helps ensure that Windows devices run on the most secure and compatible drivers available."
+
+And so, yay.  I think this is, you know, this made sense when they talked about it.  You know, everyone's worried about like their favorite driver disappearing and having, like, some random widget of hardware that needs something that Microsoft doesn't realize.  What this looks like, the only way I can see this becoming a problem would be if hardware has been abandoned by its producer.  And of course that's not at all unusual.  Then that producer of the hardware would no longer be enforcing the presence of that driver going forward.
+
+So Microsoft would say we don't need this anymore; do we?  You've got six months to tell us otherwise.  No word would come in that that driver is still needed.  And so it would disappear from Windows Update.  I don't know if Windows would pull it back out of use.  That's an interesting question.  Paul might know, like if a driver removed from Windows Update could be retroactively pulled out of a working Windows system.  I guess we're going to find out over time.
+
+LEO:  It would break something; right?  I mean...
+
+STEVE:  So nothing happens for six months.  It would, yeah, I mean, there is a danger of breakage here, which is why they are deliberately trying to be careful.
+
+LEO:  Yeah.  I guess they'd have to only take them out if they're not used, if they're unused; yeah?
+
+STEVE:  I love this bit of news.  I just think, what are you guys thinking?  "The Austrian government" - I love the headline - "agrees on a plan to allow monitoring of secure messaging."  Oh, isn't that nice.  They agreed.  Last Wednesday, Reuters News carried an interesting bit of reporting from Vienna on June 18th, Reuters.  "Austria's coalition government has agreed on a plan to enable police to monitor suspects' secure messaging in order to thwart militant attacks, ending what security officials have said is a rare and dangerous blind spot for a European Union country.  Because Austria lacks a legal framework for monitoring messaging services like WhatsApp, its main domestic intelligence service and police rely on allies with far more sweeping powers, like Britain and the U.S., alerting them to chatter about planned attacks and spying."  None of this makes any sense, but okay.
+
+LEO:  No.
+
+STEVE:  "That kind of tip-off led to police unraveling what they say was a planned attack on a Taylor Swift concert in Vienna, which prompted the cancellation of all three of her planned shows there in August of last year."
+
+LEO:  Well, that's a relief.
+
+STEVE:  Yeah.  "Joerg Leichtfried of the Social Democrats, the junior minister in charge of overseeing the Directorate for State Security and Intelligence (DSN), told a news conference:  'The aim here is to make people planning terrorist attacks in Austria feel less secure'" - that's good - "'and increase everyone else's sense of security.'"  Right, by knowing that you can be monitored.  "'That is why this decision by the cabinet today is an important milestone in the fight against terrorism and spying'" - okay, against terrorism and spying?  By spying - "'in Austria,' he added.
+
+"Under the new system," writes Reuters, "monitoring of a person's messaging must be approved by a three-judge panel and should only apply to a limited number of cases.  Interior Minister Gerhard Karner told the news conference it was only expected to be used on 25 to 30 people a year.  If it is more than 30, a report must be sent to a parliamentary committee, the government said, addressing concerns about mass surveillance and the infringement of people's privacy.  A government statement said:  'The police must have a well-founded suspicion of a possible terror attack' to monitor a person's messaging under the new system.  Once parliament passes the legislation, a tender process for monitoring technology would be launched, and monitoring would begin in 2027, the government said."
+
+Okay.  But wait.  "Once parliament passes the legislation, a tender process for monitoring technology would be launched, and monitoring would begin in 2027."  Well, you bet it's going to be tender.  It's probably going to hurt a lot.
+
+LEO:  I don't know how they propose to do this.
+
+STEVE:  Isn't this the wackiest thing?
+
+LEO:  Yeah.
+
+STEVE:  So I guess they think they can, like...
+
+LEO:  Oh, you just turn on the switch.
+
+STEVE:  ...by tender process they mean a purchasing process; right?  They're going to put it out for bid.
+
+LEO:  I don't know what they mean.
+
+STEVE:  We would like to purchase this monitoring technology.  Don't worry, we're only going to use it on 25 to 30 people per year.  And if it's more than 30, if we want to go over that limit, then we're going to have to do some more hoop jumping.  What?
+
+LEO:  I think reality is going to be interesting when they come up against it.
+
+STEVE:  Isn't that, yes.  Apparently these Austrian politicians believe that all they're lacking is a legal framework.
+
+LEO:  Yeah, that's all.
+
+STEVE:  Which they don't have.  And I wonder have they not been paying attention?  You know, just ask the UK how it's going over there with their demand that Apple allow them access to anyone's data.
+
+LEO:  Is it possible that we are the naive ones, that in fact all encrypted messaging has long ago been cracked by authorities in every country?  And that's what they're implying.  Well, the five, we don't want to have to go to the Five Eyes to get that information.  We should just be able to get it ourselves.  Do the Five Eyes have it?
+
+STEVE:  What we know is that, for example, in the case that we were talking about recently of Signalgate, where a non-approved Signal client was being used, the Signal correspondence was being sent to...
+
+LEO:  A third party.
+
+STEVE:  ...email, was being emailed to somebody.
+
+LEO:  Right.  That's secure.
+
+STEVE:  So we know that everything is available on a platform before it's encrypted and after it's decrypted.
+
+LEO:  Right.
+
+STEVE:  Right?  So, but we also know Apple is never going to comply with some platform-wide Austrian, like, we promise not to do it more than 30...
+
+LEO:  32 people.
+
+STEVE:  Yeah.  30 people a year, please.
+
+LEO:  Of course you have to break it for everybody in order to do it for a few people.
+
+STEVE:  Right.  It has to be there.  And Apple is just not, I mean, that is - they're just not, they're not going to do that.  I can't imagine, I mean, we haven't yet seen, because it hasn't actually happened, where it comes down to a true standoff.
+
+LEO:  Right.
+
+STEVE:  Of, like, you must give us access, or you're an outlaw company in our country.  No one wants to see that.
+
+LEO:  Well, forget Apple.  Signal's not going to do it.  I mean, there'll always be some strong encrypted end-to-end solution that terrorists can use.
+
+STEVE:  Well, and that's just exactly it.  I mean, there will always - if it comes to, if encryption is outlawed, only the outlaws will be encrypting.
+
+LEO:  Yeah.  They'll write their own.  These are well-understood algorithms.  They're not hard.
+
+STEVE:  Yeah, yeah.  That horse has left the barn.  Okay.  I want to talk about AI and the revelation I had.  We have two breaks.  I want to do one now, and then one before we start talking about Salt Typhoon.
+
+LEO:  Awesome.  Thank you, Steve.  Thank you, dear listeners and viewers.  We're so glad you're here.  You might be noticing, if you are watching on video, that there are occasional freezes in Steve's video.  We are unsure why that's happening.  We've tried to figure it out.  We'll continue to try to figure it out.  But just close your eyes when he's talking.  And it's amazing.  He's perfect.  I apologize.  Sometimes these things - continue, Steve, continue.
+
+STEVE:  I'm going to bring up another machine by next Tuesday.
+
+LEO:  Okay.  You think it's the machine?
+
+STEVE:  It's a little Intel NUC that's been in action for six years.  I mean, nothing has changed, but it might be getting old.
+
+LEO:  Can you launch the resource monitor and see - or the activity monitor, see what's going on, if there's something going on?
+
+STEVE:  I did, actually, at one point.  It looked fine.  But I'm going to give it a lot more...
+
+LEO:  Something's happening, yeah.  Okay.
+
+STEVE:  Okay.  I titled this "AI:  Linguistic simulation of intelligent entities."  And I wanted to share, I'm going to start by sharing an interaction that I had Saturday with ChatGPT's latest o3 highest end Large Reasoning Model which left my mouth hanging open in disbelief.
+
+LEO:  I love o3, by the way.  Very impressive.  Yeah.
+
+STEVE:  Oh.  It is astonishing.  Now, as our listeners know, when I'm not working on this podcast, I'm working to finish off the last bits of the new DNS Benchmark's core feature set.  The long-term cumulative logging features which is what the Pro edition will have will follow, finishing off these core features.  For now, we're working to finish sort of the new v2 base feature set, and I'm down to, I mean, it's like, it's done.  I'm just down to resolving a few remaining edge-case mysteries.
+
+This new code is able to benchmark the performance of IPv4, IPv6, DoH, and DoT DNS resolvers, either side by side or just per-protocol.  Because oftentimes you just want to find the fastest DoH resolver.  You don't care about the others because you want to, like, configure your browser best.  So that's all working beautifully across all of the mainstream resolvers hosted by Cloudflare, NextDNS, Google, Quad9, and others.  But I noticed that while it works on the European Union's new DNS4EU DoT resolvers, the current code shows their DoH resolvers in red.  So it thinks there's some problem with them, and it won't benchmark them.
+
+To make sure that they all work from where I am in the U.S., because I thought, well, maybe it's a geofencing problem, I configured Chrome to use DoH for its website DNS, and set up the DNS4EU, and I used Wireshark to monitor the machine's network interface for the traffic being sent back and forth.  And Chrome worked without any problem at all.  So that told me that DoH name resolution was working and available in the U.S. with those DNS4EU resolvers.  Which meant that something was not working right with the benchmark.  Even though, as I said, works great with Cloudflare and Quad9 and Google and NextDNS and everybody else.  Something about the DNS4EU, but it's working for Chrome, so I need to have it working for the Benchmark.
+
+One thing Wireshark showed me which was different between what Chrome was doing and what the Benchmark was doing, by monitoring the packet capture, was that Chrome was using TLS v1.3, whereas the DNS Benchmark was using TLS 1.2.  Chrome brings along with it its own TLS protocol stack, so it can do anything it wants, whereas the DNS Benchmark uses Windows' native networking APIs including for TLS, something known as Schannel, Secure Channel. 
+
+When I was originally implementing the Benchmark's TLS protocol on Windows, I noticed online a great deal of confusion about whether Windows 10 offers TLS 1.3, so I needed to determine once and for all, like, is that what the Benchmark's not doing?  Chrome's using 1.3.  I'm using 1.2 with the Benchmark.  Is that the problem?  So I needed to determine whether it might be possible for me to get Windows 10 to use TLS 1.3.  Was it there?  So the first thing I did, as I often do now, is ask ChatGPT.  I decided to see what ChatGPT had to say.  So I wrote the following prompt.
+
+I wrote:  "How can I use the Windows native TLS SCHANNEL API under Windows 10 to establish a TLS v1.3 connection to a remote TCP TLS v1.3 server?"  Okay, now, keep in mind, when I'm reading its reply, that this is a general purpose Chatbot that can answer a universe of questions from why does my navel accumulate lint to how many angels can dance on the head of a pin?  After thinking for 50 seconds, which is quite some time if you watch the second hand of a clock, you know, 50 seconds, you know, it was grinding on this.  And it performed four Internet searches on its own, and consulted seven sources.  ChatGPT replied to my question by writing:  "The short answer, you can't."
+
+LEO:  What?
+
+STEVE:  It's like, wow.  Then it said Windows 10's Schannel SSP - now, just listen to every nuance of this.  The short answer, you can't.  Windows 10 Schannel SSP simply does not expose TLS 1.3 in any released build.  So an SSPI client that runs entirely on Windows 10 cannot negotiate a TLS 1.3 session.  The highest version the platform will offer is TLS 1.2.  Microsoft's own protocol support matrix makes this explicit.  Then it quotes it.  Quoting Microsoft:  "TLS 1.3 is supported starting in Windows 11 and Windows Server 2022.  Enabling TLS 1.3 on earlier versions of Windows is not a safe system configuration."  Then it provides the link for that reference.
+
+And it finishes:  "The SP_PROT_TLS1_3_CLIENT constant and the newer SCH_CREDENTIALS structure were back-ported" - and by the way, I had seen those, and this was the source of the confusion.  So it understood the source of the confusion that I had, I mean, it intuited it, I guess - "were back-ported to Windows 10 1809 for source-compatibility" - which it italicized for me.  And the other places it did bold, I mean, those were its emphasis added, not mine.  This is just astonishing.  It said:  "But the underlying cryptographic engine that actually implements TLS 1.3 was never shipped in production Windows 10 builds.  Insider Preview builds from 2020-2021 did contain an experimental TLS 1.3 implementation, but that code never graduated to the GA channel and is no longer available."
+
+Again, I just looked at this, and I thought, what world are we now in, where we have this technology, where again, to me, this is an astonishingly complete and thorough response to my question, which it appears to have anticipated my confusion over the availability of TLS v1.3 in Windows 10 and explained why there has been some confusion over the question.  And I feel as though I should reiterate that this was not a model trained on this domain.  It didn't know what I was going to ask.  It could just as easily have answered a question about optimal thread density in caftan robes.  I mean, I'm astonished.
+
+So I think because I've spent some time in this domain, I've talked about this from all - we've come at it from a whole bunch of different angles on the podcast.  And everyone is wringing their hands over AGI and questions of what it means to be conscious.  The emergence of these Large Language and Large Reasoning Models, I think it's going to give cognitive scientists an entire new realm to explore.  I mean, it's - that's great for them.  It'll be interesting to see where that goes once we figure out exactly what we've created.
+
+But having watched ChatGPT work for those 50 seconds to produce that answer - an answer that would have never been possible to imagine just a year ago - I have finally settled upon where I believe we are with all this, and why everyone, including me, has been so confused by this.  It's because it's confusing.
+
+LEO:  Yes.  That's good.
+
+STEVE:  There are two distinctly different things here.  On the one hand we have an amazingly powerful linguistic simulation of an intelligent entity.  And on the other hand, we have actually intelligent entities which produce linguistic outputs.  And here's the problem:  Both of these systems produce linguistic outputs, and the outputs of both systems are identical.  The reason for this is that the intelligent entity linguistic simulator is an incredibly good linguistic simulator.  It's really good at what it does.  So no one considering just its linguistic output would have any means of determining that they were not seeing the output of the authentic intelligent entity whose earlier outputs were used to train the simulator.
+
+But in no way does that mean that the simulator is actually intelligent, nor is there any reason to believe that it is ever going to be.  No simulation, no matter how good it is, is the real thing.  The simulator may have been trained on the outputs of the real thing, but that's different from being the real thing.  Cognitive scientists are probably falling all over themselves at the prospect of determining exactly to what degree a deep simulation of intelligence is and is not intelligence.
+
+But consider this:  Although there is admittedly an interaction between thought and language, that's a realm of itself of philosophy.  For a truly intelligent entity, language is the means of communicating the thought.  The thought is the motivation which precedes its expression in language for the sake of communication.  The difference is that the linguistic simulator has no preceding locus of thought.  It is not inspired by thought to express that preceding thought.  It simply simulates the result of previous thoughts that were then expressed in language and captured for its training.
+
+Without being unduly arrogant, I'm convinced that this is the crucial distinction that separates true thinking beings who use language as a tool, and any language models that can never be anything more than empty language shells.  This by no means diminishes the value of what we've created.  Having a linguistic interface to the world's stored knowledge, expressed as language, is astonishingly powerful and useful.  But we are much more than that.
+
+And so I think, Leo, that's, for me, that rests my case in my  mind.  I think that, if you just look, the reason people are so confused is if you just examine the output, there is no difference.  And that's what all these tests and...
+
+LEO:  Yeah, it looks human, yeah.
+
+STEVE:  I mean, there is just no difference.
+
+LEO:  Right.
+
+STEVE:  Many people know people who are far less smart, knowledgeable, and intelligent...
+
+LEO:  That's right.  That's exactly right.
+
+STEVE:  ...than what we have now coming out of ChatGPT.
+
+LEO:  Exactly.
+
+STEVE:  So there's no difference.  But I think we're going to hit a limit because it will always be a linguistic simulation of an intelligent linguistic creature.  I mean, it will always be a simulation of an intelligence.  In fact, I sent the show notes out yesterday afternoon, and one of our listeners wrote back and said:  "The better term than 'artificial intelligence' is 'simulated intelligence.'"
+
+LEO:  Yeah, mimetic intelligence.
+
+STEVE:  Yes, exactly.  It is simulating intelligence.  Which, and that solves, you know, calling it a simulated intelligence solves this problem of, well, is it an artificial intelligence?  What does intelligence mean, blah blah blah.  And again, it doesn't have to be any better than it is.  What I've just read is astonishing.
+
+LEO:  Well, in fact, don't you think we kind of - we looked at HAL 9000 and kind of thought the same thing.  We knew that HAL 9000 wasn't a human in any way that made sense.  It was a machine that was very impressive.
+
+STEVE:  And it ran this spaceship.  I mean, it was in charge of running this very complicated machine.
+
+LEO:  Yeah.  Until it went wrong.
+
+STEVE:  Yeah.
+
+LEO:  But maybe because of the way Stanley Kubrick made its voice?  It didn't - it talked like this.  It didn't attempt to sound human.  And one of the things our current AI overlords really want you to think is it's human.
+
+STEVE:  Boy.  The use of personal pronouns and, you know, let me think about that for a minute.
+
+LEO:  Yeah.
+
+STEVE:  It's like, oh, my god.
+
+LEO:  And they make the voices as human as they possibly can.  And that's what's the deception.  I don't think we were deceived by HAL 9000.  I think we knew it was a simulation.  Right?
+
+STEVE:  That's interesting.  I just - I don't have it here.  I just put it back in the bookshelf.  I wanted to watch "Colossus:  The Forbin Project" again.
+
+LEO:  Yeah, yeah.
+
+STEVE:  And I have the DVD.  I have the original DVD.  And I just ripped it in order to move it to a SAN and then - or, yeah.  And then Lorrie and I are going to watch it.  But they used a Vocoder, which is back in, you know...
+
+LEO:  Yes.
+
+STEVE:  This thing was made in the '70s.
+
+LEO:  Yeah, "Colossus:  The Forbin Project," yes, right.
+
+STEVE:  Right.  And so what was really creepy was that it had a hard time, I think they deliberately had it, like, it had a hard time, like, saying "human."  It would like [indiscernible].  It's like it was a little, it's like, whoa.  You know, it gave it a little extra creep factor.  But I think you're right.  I think the use of personal pronouns, especially, you know, talking about an "I," an id, an ego, which is what, you know, we assume it talking about itself means.  It does humanize it.  It anthropomorphizes it. 
+
+LEO:  Yeah.  And of course that's what Sam Altman and Elon Musk and all the others want, is they want you to feel like it's a human.  But it isn't.
+
+STEVE:  Did you see that recent paper that compared people who use AI versus don't?  And the...
+
+LEO:  Yeah.  It was such a small sample, I don't credit it with a lot of - it was, like, 60 people.
+
+STEVE:  Yeah.
+
+LEO:  And it was pretty clear the researchers were looking for that answer; you know?  And that's always a giveaway.
+
+STEVE:  You can always find it in the data.
+
+LEO:  Any set of data you want.
+
+STEVE:  Yeah.
+
+LEO:  Look, all we have to say is this is an amazing tool.  It does amazing things.
+
+STEVE:  Yes, yes.
+
+LEO:  It's not perfect.
+
+STEVE:  Yes, yes.
+
+LEO:  It's fascinating.  And I don't think it's harmful.  I really don't. 
+
+STEVE:  I don't.  And I don't think it has, like, and I don't know how to regard this, well, it disobeyed its shutdown command.
+
+LEO:  That's BS.  All of that's BS.
+
+STEVE:  Yeah.
+
+LEO:  It's simulating, again, it's a simulation of how a human would act.
+
+STEVE:  Yes, it is.  Of what a human would say.
+
+LEO:  Right.  It's doing its best simulation.
+
+STEVE:  Yeah.
+
+LEO:  That's all.
+
+STEVE:  Yeah.  And so what I think we have is an incredibly powerful search engine for content.
+
+LEO:  That's where it's really useful.
+
+STEVE:  Yeah.  I think it's not...
+
+LEO:  Just as your example.
+
+STEVE:  I think it's no surprise that that's where it's really useful because that's what it actually is.
+
+LEO:  It's a summary of all the data.
+
+STEVE:  Yeah.
+
+LEO:  It's just encapsulated all the data, yeah.  Good.  Yeah.  I think, Steve, the more you talk about AI, the better.  I think you're 100% on track.  Yup.
+
+STEVE:  Okay.  Last break, and then we're going to find out how the world got into this trouble with Salt Typhoon.
+
+LEO:  Oh, my god.
+
+STEVE:  What happened?
+
+LEO:  Oh, my god.  Ready to salt his typhoon?
+
+STEVE:  Okay.  So Cisco's Talos intelligence group have posted their analysis of the Salt Typhoon attacks in a posting titled "Weathering the storm: In the midst of a Typhoon."  I don't know whether the fact that Salt Typhoon used three of Cisco's own previous vulnerabilities has anything to do with their decision to reverse engineer Salt Typhoon, but that's what they did.  And, you know, bravo.  I hope they learn some lessons.
+
+Cisco's analysis of this super-Advanced and pernicious Persistent Threat Group begins with this summary.  They wrote:  "Cisco Talos has been closely monitoring reports" - I bet - "of widespread intrusion activity against several major U.S. telecommunications companies.  The activity, initially reported in late 2024 and later confirmed by the U.S. government, is being carried out by a highly sophisticated threat actor dubbed Salt Typhoon.  This blog highlights our observations on this campaign and identifies recommendations for detection and prevention of the actor's activities.
+
+"Public reporting has indicated that the threat actor was able to gain access to core networking infrastructure in several instances and then use that infrastructure to collect a variety of information.  There was only one case in which we found evidence suggesting that a Cisco vulnerability (CVE-2018-0171) was actively abused.  In all other incidents we've investigated to date, the initial access to Cisco devices was determined to be gained through the threat actor obtaining legitimate victim login credentials."  That's later contradicted, but we'll get there in a second.  "The threat actor then demonstrated their ability to persist in target environments across equipment from multiple vendors for extended periods, maintaining access in one instance for over three years.
+
+"A hallmark of this campaign is the use of living-off-the-land techniques on network devices.  It's important to note that while the telecommunications industry is the primary victim, the advice contained herein is relevant to, and should be considered by, all infrastructure defenders."  In other words, everybody with Cisco gear, which is pretty much everybody at the high end.
+
+"No new Cisco vulnerabilities were discovered during this campaign."  That's no new Cisco vulnerabilities.  "While there have been some reports that Salt Typhoon is abusing three other known Cisco vulnerabilities, we've not identified any evidence to confirm these claims, though others have.  The vulnerabilities in question are listed below.  Note that each of these CVEs have security fixes available.  Again, patches available.  Patches never applied.  The threat actors regularly use publicly available malicious tooling" - in other words, proofs of concept that are published, often on GitHub or on the Dark Web - "to exploit these vulnerabilities, making patching of these vulnerabilities imperative."  No argument there.
+
+"Therefore," they wrote, "our recommendation, which is consistent with our standard guidance independent of this particular case, is always to follow best practices to secure network infrastructure."  And of course obviously best practices says keep all your equipment patched up to date.  Right.  That would be nice.
+
+So then they list three CVEs.  	CVE-2018-0171:  Cisco IOS - and remember that's Internet OS - and IOS XE Software Smart Install Remote Code Execution Vulnerability.  CVE-2023-20198 and also  20273:  Multiple Vulnerabilities in Cisco IOS XE Software Web UI Feature.  And 2024-20399:  Cisco NX-OS Software Command Line Injection Vulnerability.
+
+Okay, now, the fact that a vulnerability - think about this, the fact that a vulnerability Cisco fixed back in 2018 was successfully used by Salt Typhoon.  With Cisco's own admission, this is what they saw.  Or anyone, for that matter, to penetrate a major telecommunications vendor in 2024, and not just one, many in 2024, is difficult to explain away.  By 2024 the patch for a 2018 vulnerability would have been six years old.  So Cisco gear from before 2018 had been sitting without anyone considering its need for updating throughout that entire time, six years.  And would you like to guess the CVSS score of that now seven-year-old vulnerability CVE-2018-0171?  Believe it or not, at the time it achieved, and still has, a whopping CVSS of 9.8.  Which, as we know, we rarely see.  You have to really work to get a CVSS of 9.8.
+
+This is why I stated earlier that our current system of relying upon the timely - or any, really any - post-sales maintenance of equipment on a security perimeter is fundamentally broken.  We cannot rely on it.  Web servers are certainly not permitted to be using any certificate that expired six years before.  But critical networking gear is allowed to continue operating month after month and year after year with effectively expired firmware containing critical, known, CVSS 9.8 scale vulnerabilities.
+
+So what different activities did Cisco observe on the part of these threat actors, known to be Chinese state-sponsored Salt Typhoon?  Under "Credential Use and Expansion," Cisco wrote of these attacks, which they observed:  "The use of valid, stolen credentials has been observed throughout this campaign, though it is unknown at this time exactly how the initial credentials in all cases were obtained by the threat actor.  We've observed the threat actor actively attempting to acquire additional credentials by obtaining network device configurations and deciphering local accounts with weak password types, a security configuration that allows users to store passwords using cryptographically weak methods.
+
+"In addition, we've observed the threat actor capturing SNMP, TACACS, and RADIUS traffic, including the secret keys used between network devices and TACACS/RADIUS servers.  The intent of this traffic capture is almost certainly to enumerate additional credential details for follow-on use."
+
+Then we have Configuration Exfiltration.  They wrote:  "In numerous instances, the threat actor exfiltrated device configurations, often over TFTP and/or FTP.  These configurations often contained sensitive authentication material, such as SNMP Read/Write community strings and local accounts with weak password encryption types in use.  The weak encryption password type would allow an attacker to trivially decrypt the password itself offline.  In addition to the sensitive authentication material, configurations often contain named interfaces, which might allow an attacker to better understand the upstream and downstream network segments and use this information for additional reconnaissance and subsequent lateral movement within the network."
+
+So they were in there.  They were exfiltrating everything that they could get their hands on.  And unfortunately, when you're actually looking at the traffic where you assume no one should ever be, there are lots of secrets there, and lots of useful information that tells you where to find other secrets.
+
+Under Infrastructure Pivoting they said:  "A significant part of this campaign is marked by the actor's continued movement, or pivoting, through compromised infrastructure.  This 'machine to machine' pivoting, or 'jumping,' is likely conducted for a couple of reasons.  First, it allows the threat actor to move within a trusted infrastructure set where network communications might not otherwise be permitted.  Additionally, connections from this type of infrastructure are less likely to be flagged as suspicious by network defenders, allowing the threat actor to remain undetected.
+
+"The threat actor also pivoted from a compromised device operated by one telecom to target a device in another telecom.  We believe that the device associated with the initial telecom was merely used as a hop point, and not the intended final target in several instances.  Some of these hop points were also used as a first hop for outbound data exfiltration operations. Much of this pivoting included the use of network equipment from a variety of different manufacturers."
+
+And finally, under Configuration Modification, they said:  "We observed that the threat actor had modified devices running configurations as well as the subsystems associated with both Bash and Guest Shell."  They said, in parens:  "(Guest Shell is a Linux-based virtual environment that runs on Cisco devices and allows users to execute Linux commands and utilities, including Bash.)"
+
+Now, I'll just stop to say that what this means is that we've got Cisco devices which are being penetrated that are now powerful enough.  They're just not switches, dumb switches, with access control lists where packets get routed.  They're sophisticated enough to be running Linux-based virtual environments and commands.  So these are computers on the edge that have serious vulnerabilities that have not been - these are computers that haven't been patched in seven years.  No Linux user would do that.  And they're critical infrastructure machines.
+
+So they said:  "Running configuration modifications they saw included:  The loopback interface IP address was modified.  GRE tunnel creation and use, meaning setting up outbound encrypted tunnels to exfiltrate whatever they wanted.  Creation of unexpected local accounts.  ACL modifications, Access Control Lists.  SNMP community string modifications, changing how SNMP access can be done remotely.  HTTP and HTTPS server modifications on both standard and non-standard ports.  So setting up local servers so they can access content remotely."
+
+Then under Shell Access Modifications they said:  "Guest Shell enable and disable commands.  	Started SSH alternate servers on high ports for persistent access, such as sshd_operns (on port 57722) on underlying Linux Shell or Guest Shell.  Created Linux-level users (modifying /etc/shadow and /etc/passwd) files.  And added SSH 'authorized_keys' under root or other users at Linux level.  So in other words, completely owning this equipment, like taking it over.  Setting up servers for remote SSH access."  Talk about persistent presence.
+
+So it is no surprise that these threat actors were able to obtain and maintain persistence within someone's network.  If you have network machines that no one has bothered to maintain for six years, containing a persistent and lingering CVSS of 9.8 vulnerability which provides a means for gaining remote entry, and if that system is powerful enough to host a Linux-based virtual environment where it's possible for an attacker to modify access control list rules, start HTTP servers on non-standard ports and fire up SSH servers on high ports, it would be more surprising if they did not obtain a permanent persistence within a victim network.  It's just horrifying.
+
+And I get it that Cisco wants to paint the best picture on this that they can.  That's only natural.  But they and others have enumerated a total of four vulnerabilities that were used by these Salt Typhoon attackers.  So far, I've only talked about the oldest one.  It created a six-year window of vulnerability for any of these Cisco devices.  And notice that we don't know the window's closed yet.  Right?  I mean, presumably there are still routers out there that are carrying this firmware from 2018.  So the window, six years and counting in terms of its duration.
+
+But even though this flaw from 2018 carried a heart-stopping CVSS of 9.8, believe it or not, it wasn't the worst one.  Having a six-year window of opportunity is not good, but all an attacker needs is for that window to still be open when they come knocking.  So the fact that one of the other CVEs associated with these Salt Typhoon attacks was only discovered in 2023 in no way diminishes its severity.  So long as it was present at the time of the attacks in 2024, that's all the attackers need.  And what CVSS score do you imagine it carries?  Would you believe that Cisco's CVE-2023-20198 has been assigned that rarest of the rare CVSS of 10.0?  Yes.  It's a 10.0 because it cannot get any worse.
+
+LEO:  Wow.
+
+STEVE:  And this is a CVSS for a piece of networking gear that's inherently on the front lines, is exposed to the bad guys, and being a set-and-forget appliance will tend not to be on anyone's maintenance and update radar.
+
+As I said earlier, the industry's "we're doing the best we can" and "this is the only thing we can think of" model of after-sales security maintenance is obviously inherently and badly broken.  There's a chain of responsibility that requires everyone to perform perfectly.  Cisco needs to not ever make a mistake.  And once sold and deployed, anything that's ever found to be wrong with one of their devices needs to be immediately repaired in the field.  But this chain is inherently brittle, with everything working against it.  Mistakes happen.  Entropy is real.  So mistakes are always trying to happen.
+
+And Cisco is going to ship mistakes.  Technicians in the field are always going to appear to have better things to do than to continually run around updating the operating versions of the firmware of every device they have, every time an update is made available, for the sole purpose of keeping them all up to date, especially when the updates that really are critical may be much fewer and rarer.  So there is inherently pressure to "set it and forget it."  Don't break it if it's not broken, even though doing that means that anything that's later found to have slipped past Cisco's testing and quality control at the time of sales will tend to persist in the field.
+
+Now, this podcast has been around for a while.  So you might imagine that something like a CVSS of 10.0 might have come to our attention back in 2023, and that I might have believed that this audience should be informed of it.
+
+LEO:  Oh, yes, and?
+
+STEVE:  And sure enough, Podcast #945, which you and I, Leo, delivered on October 24th, 2023 was titled "The Power of Privilege."  And among the summary items at the top of the show was "Vulnerabilities with a CVSS score of 10.0 are blessedly rare, but today the industry has another."  During the coverage of this a little over 18 months ago, I noted that this was one of those horrific web management UI authentication bypass vulnerabilities, and that this meant it could be scanned for.  And scanned for it was.  At the moment of its announcement, around 42,000 instances of Cisco Web UI were found to be online and vulnerable.
+
+But that number dropped with surprising speed.  This was not because the techs at the world's telecom companies were on the ball and promptly responding to the emergency.  No.  The numbers of vulnerable Cisco devices were observed to drop precipitously because the bad guys - like Salt Typhoon, we now know - who were on the ball scanned, located, immediately climbed inside and said, "Thank you very much, see you later," and shut the door behind them.
+
+LEO:  Oh, my god.
+
+STEVE:  Thus taking their now-compromised device off the map while they set up a persistent presence.
+
+LEO:  Did they fix, did they patch the systems?
+
+STEVE:  They closed the vulnerability.
+
+LEO:  That's hysterical.
+
+STEVE:  So nobody else could get them.
+
+LEO:  That's so amazing.
+
+STEVE:  Or find them.
+
+LEO:  Holy cow.
+
+STEVE:  Now, we often talk about these vulnerabilities in the abstract, right, as we did just over a year and a half ago in this instance, because that's all we have is an abstraction.  It's not often that we're able to follow up with a "Whatever happened with that horrific 10.0?"  But today we can because many security researchers, including Cisco's own Talos group, have identified that event, a little over 18 months ago, as one of the principal ways China's Salt Typhoon malicious hacking group obtained access to the networks of many domestic U.S. and foreign companies' networks.
+
+We now know what a disaster has ensued from that event.  And given the 42,000 initially vulnerable networks scale of this, that it's 42,000 networks, it's also clear why no one can be really sure that Salt Typhoon has been completely expunged from every network they penetrated.  There are just too many of them. And they weren't all telecom companies.  That's just what's making the news now.
+
+The other significant thing we learn from Cisco's Talos after-action report is the surprising power of the devices that were found to be infected, and that the bad guys knew how to leverage that power to their benefit.  In their report's section describing the commands that were observed or logged to have been executed, they list, they said:  "Packet capture:  The threat actor used a variety of tools and techniques to capture packet data throughout the course of the campaign, listed below."  Then they list:  	"Tcpdump, a portable command-line utility used to capture packet data at the underlying OS system level.
+
+"Tpacap, a Cisco IOS XR command line utility used to capture packets being sent to or from a given interface via NETIO at the underlying OS level.  Embedded Packet Capture (EPC), a Cisco IOS feature that allows the" - get this - "the capture and export of packet capture data.  Then they show the command, Monitor capture CAP export ftp:// and then a URL of an FTP server."
+
+When I talked about the concerning power of the Cisco devices the attackers had access to, this is what I meant.  The operating systems of these Cisco devices support the installation of a tap into network interfaces which then monitors, captures and exports the intercepted network traffic to any external FTP server.  It would be difficult to invent a scenario that was worse than this.  If this appeared in the plot of some network hacking movie I'd raise my eyebrows and think "Oh, yeah, right."  But the attackers were observed to be using those commands on Cisco's compromised gear.  It's no wonder the title of this Talos disclosure is "Weathering the Storm."
+
+To give a deeper sense for the sophistication of Salt Typhoon, Cisco describes a custom utility they discovered that Salt Typhoon had written just for this purpose.  Under the heading "Operational utility (JumbledPath)" they explain:  "The threat actor used a custom-built utility, dubbed JumbledPath, which allowed them to execute a packet capture on a remote Cisco device through an actor-defined jump-host.  This tool also attempted to clear logs and impair logging along the jump-path and return the resultant compressed, encrypted capture" - so it's encrypting and compressing the capture - "via another unique series of actor-defined connections or jumps.
+
+"This allowed the threat actor to create a chain of connections and perform the capture on a remote device.  The use of this utility would help to obfuscate the original source, and ultimate destination, of the request and would also allow its operator to move through potentially otherwise non-publicly-reachable or routable devices or infrastructure.
+
+"This utility was written in GO and compiled as an ELF binary using an x86-64 architecture.  Compiling the utility using this architecture makes it widely useable across Linux operating systems, which also includes a variety of multi-vendor network devices.  This utility was found in actor configured Guestshell instances on Cisco Nexus devices."  You know, we're really talking about full penetration here.
+
+LEO:  Ouch.
+
+STEVE:  And what's more chilling is that there's really no way to know where these guys might still be.
+
+LEO:  And you really have to blame Cisco for leaving that door wide open.
+
+STEVE:  Yes.
+
+LEO:  That's appalling.
+
+STEVE:  It is appalling.  And we're going to get to appalling in a second.  Salt Typhoon also invested in bypassing and evading any defenses.  Talos explained:  "The threat actor repeatedly modified the address of the loopback interface on a compromised switch and used that interface as the source of SSH connections to additional devices within the target environment, allowing them to effectively bypass access control lists in place on those devices.  The threat actor routinely cleared relevant logs, including .bash_history, auth.log, lastlog, wtmp, and btmp, where applicable, to obfuscate their activities.  Shell access was restored to a normal state in many cases through the use of the 'guestshell disable' command.  The threat actor modified authentication, authorization, and accounting (AAA) server settings with supplemental addresses under their control to bypass access control systems."
+
+I mean, these organizations were completely owned by Chinese malicious state-sponsored attackers.  In other words, these guys really knew their way around this Cisco environment.  You know, these were not script kiddie weenies.  It would be fascinating to have something we'll likely never see, which would be the Salt Typhoon view of this.  Did they discover or learn of this Cisco CVSS 10.0 vulnerability, then immediately jump on, you know, scan, find them, jump on them, crawl inside, close the door behind them, and only then tool-up and hone their expertise to this level?  Or were they already fully equipped with this level of knowledge?
+
+My guess, knowing Salt Typhoon, is that it would be the latter.  I suspect they were already well versed in Cisco exploit operations, which would probably be conducted, you know, previously on a much smaller scale, and then this mother lode of a publicly exposed 10.0 login authentication bypass fell into their lap so that they already knew what to do.  It was only a matter of identifying victims and doing it all quickly enough.
+
+Under the topic of "Detection," Talos said:  "We recommend taking the following steps to identify suspicious activity that may be related to this campaign."  I mean, it's just generic pablum.  They said:  "	Conduct comprehensive configuration management (inclusive of auditing), in line with best practices.  Conduct comprehensive authentication/authorization/command issuance monitoring.  	Monitor syslog and AAA logs for unusual activity, including a decrease in normal logging events" - right, because the bad guys are deleting the logs - "or a gap in logging activity.
+
+"Monitor your environment for unusual changes in behavior or configuration.  Profile (fingerprint via NetFlow and port scanning) network devices for a shift in surface view, including new ports opening and closing and traffic to or from.  Where possible, develop NetFlow visibility to identify unusual volumetric changes.  Look for non-empty or unusually large .bash_history files.  Additional identification and detection can be performed using Cisco forensic guides."
+
+Now, okay, none of that's surprising.  It's all very generic.  But something in their next section under "Preventative measures" caught my eye.  The first item on Cisco's list of preventative measures is "Leverage Cisco Hardening Guides when configuring devices."  The fact that there's a "hardening guide" suggests that, even today, Cisco still doesn't get it.  It would be like, 10 years ago, Cisco's "Hardening Guide" saying:  "Be sure to delete the default admin credentials shipped with your Cisco device."  As we'll recall, Cisco was once actually doing that.  In other words, there should not be any guide for hardening a device.
+
+LEO:  Shouldn't be necessary.
+
+STEVE:  Right.  The only guide available should be for optionally loosening a device's security.
+
+LEO:  Oh, I like that.
+
+STEVE:  It ought to be difficult and require deliberate work to make any such device insecure.  There should never be optional advice, "Leverage Cisco Hardening Guides when configuring devices."  We know people don't.  And how do we know?  Because people don't and haven't.
+
+Talos' report finishes with an "Analyst's comments" section.  This should be interesting.  They write:  "There are several reasons to believe this activity is being carried out by a highly sophisticated, well-funded threat actor, including the targeted nature of this campaign, the deep levels of developed access into victim networks, and the threat actor's extensive technical knowledge.  Furthermore, the long timeline of this campaign suggests a high degree of coordination, planning, and patience, standard hallmarks of advanced persistent threat (APT) and state-sponsored actors.
+
+"During this investigation, we observed additional pervasive targeting of Cisco devices" - yeah, gee, why do you think they were targeting Cisco? - "with exposed Smart Install (SMI) and the subsequent abuse of CVE-2018-0171, a vulnerability in the Smart Install feature of Cisco IOS and Cisco IOS XE software.  This activity appears to be unrelated to the Salt Typhoon operations, and we have not yet been able to attribute it to a specific actor.  The IP addresses provided as observables are associated with this potentially unrelated SMI activity.  Legacy devices with known vulnerabilities, such as Smart Install, should be patched" - wouldn't that be nice - "and decommissioned" - okay - "if no longer in use."
+
+Well, we know they're in use because they're on the front lines.  Wouldn't it be nice if that was the world we were living in.  Again, all of our real-world experience informs us that it's not.  There were 42,000 instances of that vulnerability, that backdoor open in 2023 when we talked about it in October of that year.
+
+They wrote:  "Even if the device is a non-critical device, or carries no traffic, it may be used as an entry door for the threat actor to pivot to other more critical devices.  The findings in this blog represent Cisco Talos' understanding of the attacks outlined herein.  This campaign and its impact are still being researched, and the situation continues to evolve. As such, this post may be updated at any time to reflect new findings or adjustments to assessments."
+
+Okay.  So we've achieved an unfortunate bit of closure regarding a very serious Cisco flaw that woke up the entire security world a little more than 18 months ago.  At the time that we covered this, I wrote the following for that podcast:  "This first known instance of attacks against Cisco's IOS XE-based routers and switches, which appear to have been initial proof-of-concept probing incursions, occurred at the end of last month on the 28th."  So that would have been September of 2023.  Yeah, 2023.
+
+I wrote:  "Then more than three weeks passed before Cisco finally released the first fixes last Monday, October 16th.  During those, the intervening three weeks, more than 42,000 of Cisco's IOS XE-based devices were compromised.  We know that it was 42,000 devices because scanners were quickly created by security firms who wanted to track incursions.  And in response to the visibility of their initial implants, the perpetrators of these attacks updated their malware to make it less visible."
+
+And now we know at least some of what became of those devices.  China's Salt Typhoon group assessed their massive inventory of access, discovered that they were now inside the networks of the world's telecom providers, not to mention some large ISPs and even Digital Realty, one of the largest cloud providers, then began taking advantage of their newfound access for espionage and spying.  Are they gone?  Have all 42,000 instances of their intrusion been found and removed?  Given everything we know of the way today's networks are being managed, that's not a bet I would take.
+
+Every listener of this podcast knows that I draw a clear distinction between mistakes and policies.  Mistakes happen, but policies are deliberate.  In this case I must take issue with Cisco's deliberate design - and design is policy - of its crucial web management interface.  We know for a fact that some 42,000 instances of their XE-class devices had web management exposed globally.  Web management exposed globally.  It should not be possible to expose web management globally because there is no management-defensible reason for ever allowing global access to a high-end device's public management interface.  Everyone listening to this podcast also knows what a fan of simple IP filtering I am.  I'm a fan because the technology is so simple, and it offers so much leverage.
+
+So, okay, sure, allow a single remote IP, or several specific remote IPs, or perhaps a /24 class-C size network block to be specified to have remote access.  Those would allow for remote management across disjoint corporate networks, but simply don't provide any provision for access from any IP anywhere in the world.  How can that possibly ever actually be necessary?  Who would ever actually need to allow China to access your device's management interface?  Because that's what's being explicitly allowed whenever unfiltered remote access is enabled.  Sure, an ACL - an Access Control List - could and should have been added to that access.  But I'd bet that it says so right there and in bold print in Cisco's illustrious "Hardening Guide."
+
+But that's not the correct policy.  What no one ever wants or needs to have happen should not be possible.  It should not be possible for any lack of configuration or misconfiguration to give Chinese hackers anywhere outside of one's immediate control access to something they should not have.  It should not be possible, period.
+
+I'm sure that, if confronted with this, Cisco's engineers would say, "Well, no one should leave their web admin accessible to anyone, and we provide a very nice access control list that allows anyone to limit that access."  Okay, sure.  But the default is wide open.  And even if it wasn't, it would be possible to innocently add a wide-open rule because, hey, that would be easier.  However, nothing changes the fact that there is no demonstrable need for global public access to a high-end router's admin interface, yet some 42,000 networks were all compromised in the blink of an eye because this was Cisco's responsibility-transferring policy:  "It's not our fault if you don't follow our optional hardening guide."
+
+LEO:  It's optional.
+
+STEVE:  Leo, I am reminded of Douglas Adams' original "Hitchhiker's Guide" novel, where the Earth is scheduled for demolition by the Vogons due to the need to create an intergalactic bypass.  And the novel's protagonist, Arthur Dent, says, "What are you talking about?  You can't just destroy the Earth!"  And he's told that all the proper notices and required paperwork had been filed with the local galactic sector office some time ago.
+
+You know, similarly:  "Why are they complaining that 42,000 of our XE-class devices were all just taken over by Chinese Military hackers?  Didn't they read the 'Hardening Guide' that we prepared?"
+
+LEO:  It was stored in the basement of the building in the third arm of the galaxy?  Yeah.  It's amazing.  And they should really be - I didn't realize Salt Typhoon was all their fault.  I thought it was SS7 and a variety of other things.  It's really the Cisco thing.
+
+STEVE:  Cisco.
+
+LEO:  Man, they need to really take responsibility for this.  And so the fix would be to get, well, the fix would be to patch these routers.  But how do you get, if they're already in there, how do you get rid of them?
+
+STEVE:  That's the problem.  As you and I said 20 years ago, if you have malware in your PC...
+
+LEO:  You can't trust it anymore.
+
+STEVE:  You never know.  You can never trust it.  I mean, we know that malware can live in printers.
+
+LEO:  Right.  Or cameras.
+
+STEVE:  Yeah, cameras.  I mean, it could be anywhere inside - and when you're talking about AT&T, they don't even know the wires they have.  I mean, it's astonishing.  I mean, it's just, it's like, you know, for years and years and years on this podcast there's been a tendency to say, whoa, the sky is falling.  Oh, we've got to - well, this is what that looks like.  It's not the end of life on Earth.
+
+LEO:  No.
+
+STEVE:  But the U.S.'s networks have fallen to Chinese military.
+
+LEO:  And they can't be fixed in a reasonable way.
+
+STEVE:  No.  You don't know where they are.
+
+LEO:  Now, and people, you know, might take issue with your idea that you can make software perfect.  But this is so much the opposite of perfect.  You definitely shouldn't have software with an open portal on a networking device and then say, well, you didn't harden it.  It's your fault.
+
+STEVE:  And my point was it should not be possible to allow any IP to access the management interface. 
+
+LEO:  Right.
+
+STEVE:  What possible need is there?  You know what network or a couple IPs should have access to that management interface.  So we've long ago learned username and password doesn't cut it.
+
+LEO:  Unh-unh.
+
+STEVE:  No one should have access.  And if you simply drop any IP packet coming in, it doesn't matter if you don't discover a vulnerability later.  Nobody can connect to that port.  And there's no reason Cisco should have ever allowed it.  It's hubris on their part.  And laziness.
+
+LEO:  Yeah.  And they're not suffering a consequence at all, in any way, of course.
+
+STEVE:  No.  No.  Because their license agreement, all of their...
+
+LEO:  They're off the hook.
+
+STEVE:  Their attorneys are all over this saying, well, we did - all this is, is a best effort.  Everybody knows things are not perfect, and we aren't either.  And you use this at your own risk.  And any damage that befalls you is yours.  And if you don't want that, then don't buy it.
+
+LEO:  The real problem is that the damage is not to the users of the Cisco equipment, but to their customers.
+
+STEVE:  Right.  And that was the point that the Canadian posting meant.  The telecom service providers, the people that they are selling telecom services, to, it's like back in the days where that dental managed service provider infected all the dental offices that were using them as their service provider.  Well, this is a telecom service provider.  All of their clients, all of their customers are now victims.
+
+Copyright (c) 2025 by Steve Gibson and Leo Laporte.  SOME RIGHTS RESERVED.  This work is licensed for the good of the Internet Community under the Creative Commons License v2.5.  See the following Web page for details:  https://creativecommons.org/licenses/by-nc-sa/2.5/.
+
+

@@ -1,0 +1,809 @@
+GIBSON RESEARCH CORPORATION		https://www.GRC.com/
+
+SERIES:		Security Now!
+EPISODE:	#1035
+DATE:		July 22, 2025
+TITLE:		Cloudflare's 1.1.1.1 Outage
+HOSTS:	Steve Gibson & Leo Laporte
+SOURCE:	https://media.grc.com/sn/sn-1035.mp3
+ARCHIVE:	https://www.grc.com/securitynow.htm
+
+DESCRIPTION:  Bypassing all passkey protections.  The ransomware attacks just keep on coming.  Cloudflare capitulates to the MPA and starts blocking.  The need for online age verification is exploding.  Microsoft really wants Exchange Servers to subscribe.  Russia (further) clamps down on Internet usage.  The global trend toward more Internet restrictions.  China can inspect locked Android phones.  Use a burner.  Web shells are the new buffer overflow.  An age verification protocol sketch.  What Cloudflare did to create an outage of 1.1.1.1
+
+SHOW TEASE:  It's time for Security Now!.  Steve Gibson is here with news of a passkey bypass.  Yikes.  We'll also talk about problems Cloudflare had with its DNS provider and explain what happened.  Russia clamps down, really clamps down on Internet usage.  And some advice, if you're planning to travel to China. Frankly, anywhere.  Stay tuned.  Security Now! is next.
+
+LEO LAPORTE:  This is Security Now! with Steve Gibson, Episode 1035, recorded Tuesday, July 22nd, 2025:  Cloudflare's 1.1.1.1 Outage.
+
+It's time for Security Now!, the show where we cover your security and your privacy online.  We talk about all the exciting stuff happening in the world with this guy right here, Mr. Steve Gibson, a show we wait all Tuesday for.  Hello, Mr. Steverino.
+
+STEVE GIBSON:  All Tuesday?  No.
+
+LEO:  All week for Tuesday.
+
+STEVE:  Okay, there we go.
+
+LEO:  That's  better.
+
+STEVE:  From the end of the previous show...
+
+LEO:  I wait all day for this show.
+
+STEVE:  That's right.  You're busy all morning before this show.
+
+LEO:  Yeah.  No, I do look forward to it all week because you always find some interesting stuff.  In fact, this week I even sent you some things.  I don't know if you used them, but I sent you some things to talk about.
+
+STEVE:  You did, and they're going to need - I've been away of homomorphic encryption for quite a while.
+
+LEO:  I'm sure you're the first person who ever mentioned it in my presence.
+
+STEVE:  It's mind-scrambling technology.
+
+LEO:  Yeah.
+
+STEVE:  The fact that you're able to operate on data without decrypting it, that's crazy.
+
+LEO:  And the ultimate in privacy.  But we're not there yet because it's computationally a little intensive.
+
+STEVE:  It does keep its secrets, yes.
+
+LEO:  Yeah.
+
+STEVE:  Actually a number of our listeners, like in a flurry, sent me news of today's topic, which is - what's really interesting, Leo, is this occurred during the hour, the latter part of the hour exactly during last week's podcast recording.
+
+LEO:  Oh, interesting.
+
+STEVE:  Which is that, due to someone tripping over a cord at Cloudflare headquarters, their famous 1.1.1.1 DNS server service disappeared for an hour globally.  So what happened?  How does that happen?  We're going to have fun talking about that today.  Cloudflare's 1.1.1.1 outage for Security Now! 1035 for this July 22nd.  But we've got a bunch of other fun stuff to talk about.  We've got an active attack successfully bypassing all passkey protections, as in, you know, the FIDO2 passkey.  Ransomware attacks just keep coming.  Cloudflare capitulates to the MPA, the Motion Picture Association, and starts blocking, which they've resisted strongly until now, you know, on the whole 'Net Neutrality side.
+
+Also we're going to look, actually in two different instances, this issue of age verification, which turns out to, like, be for some reason my main focus.  I guess I just see this as like a huge need, an obvious need, and it's like the industry's been caught flatfooted because we have no way to do that.  And I don't see how we can do it for no cost, which is upsetting because it sort of de-democratizes the Internet, which, you know, everyone's been fighting to keep open.  Anyway, going to talk about that a few more times.  Microsoft trying to push people from a purchase to a subscription of their Exchange servers.
+
+Russia further clamping down on their Internet usage and how unfortunately we begin to see a global trend toward that emerging.  China inspecting locked Android phones, so maybe get yourself a burner.  Web shells becoming the new buffer overflow.  As I said, I'm going to sketch out a few different aspects of this whole age verification problem and, like, play with some protocols that might work.  And then we're going to talk about what Cloudflare did to create their own complete global massive DNS outage of their flagship DNS server for the hour during which we were recording this podcast last week.  And of course as always we have a great Picture of the Week.  So, yeah, I think this one may have been worth waiting for.
+
+LEO:  Yay.  Absolutely.  As always.  We'll save homomorphic encryption for another day.
+
+STEVE:  It's - yeah.
+
+LEO:  It's a hairy topic.
+
+STEVE:  It's a, yeah, you lose your hair by the time you've covered that topic.
+
+LEO:  It's really funny how much of the time that I'm, you know, I spend hours every day reading all the tech news, preparing for all the shows.  And how many stories I come across where, oh, I've got to ask Steve about this.  I don't pester you with those, so just to let you know.  Every once in a while I send Steve one.  But I don't pester you.
+
+STEVE:  One escapes the filter, yes.
+
+LEO:  Well, one just came in that I'm a little devastated about.  You know, I've talked before about this AI device that I wear, the Bee Computer.  It's been recording everything that I've done for the last six months and summarizing it in AI and given me a - they just got sold to Amazon.  So I just now deleted all the data.  And I'm really hoping the company lives up to its promise to delete all that data.
+
+STEVE:  So you're wearing it as a lanyard?
+
+LEO:  Yeah.
+
+STEVE:  So it just sort of hangs there.
+
+LEO:  Well, I used to wear it on my wrist, and then briefly I wore it clipped on.  But I kept losing it.  This is the third one. 
+
+STEVE:  And is it audio?  So it's not a camera.
+
+LEO:  It's just audio.
+
+STEVE:  Okay.
+
+LEO:  It records everything.  It sends the transcript to AI, which then synopsizes it, bullet points it, gives me a kind of a diary, a list of tasks that I think I might want to add to my to-do list, which is very, very valuable.  And generates facts about me, over 2,500 facts over the last six months.  Things like your wife's name is Lisa, your cat's name is Rosie, you have a Helix mattress, whatever, stuff like that.  Which is great, but I don't want Amazon to have all that stuff.  So...
+
+STEVE:  Yeah.  I'm in the process of setting up a new home, and it was - I needed to choose an automation system.
+
+LEO:  Yeah.
+
+STEVE:  And I initially thought, naively, oh, well, you know, everybody has that A-word device, you know, A-L-E-X-A.  But as I started to play with it, I realized I'm part of a big commercial enterprise.  And, I mean, they're, like, upselling me, you know, Amazon is.  And it's like, no, I don't - I'm not using their technology.
+
+LEO:  Yeah.  I think really we're all just going to end up using Apple stuff and hope that Apple lives up to its promise.
+
+STEVE:  And I settled on using HomeKit.
+
+LEO:  HomeKit, yeah.
+
+STEVE:  As the base.
+
+LEO:  It's secure; right?
+
+STEVE:  Yes.  And we know, to the highest levels of the industry, that's what Apple has done.  I'm a little annoyed with them over their position on age verification because, you know, they're so wrapped around that flag that it's like, you know, the industry needs this, Apple.  But, you know, they're doing what they can by creating age range brackets and, you know, trying to keep it as fuzzy as possible.  But anyway, so you're saying secure, yes.
+
+LEO:  Secure.
+
+STEVE:  Private, yes.
+
+LEO:  Well, we hope so.  I mean, you somewhat trust Apple.  But this is so much part of now their marketing that I think they probably will live up to it, at least more than Amazon or Google or Microsoft or OpenAI or any of the other possibilities.  So it seems like if you're going to do home automation, that's the way to go.  That's what I'm going to do, for sure.
+
+STEVE:  I did have to choose Google's doorbell because it's the best.
+
+LEO:  Well, you don't want Ring because Ring just announced that they're going to be sending the information to the cops again. 
+
+STEVE:  So I have a bridge in order to create that link.
+
+LEO:  My goal in the long run, and this is a time-consuming thing that I'm not going to do anytime soon, but is to make it all internal and use AI internally and all of that stuff.  That would be my goal.  Same thing with this.  I love the idea, the premise of this Bee Computer.  I want it to be my own AI, not somebody else's.
+
+STEVE:  Well, and the problem is the world is switching to a subscription model, where it's all services.  And so it's like, you know, you audit your bank account, and there's all these little dribbles coming out from all the things that have happened in the past.
+
+LEO:  It feels it's almost impossible to secure.
+
+STEVE:  And, you know, as you get older, you really don't want dribbles.  That's just not good.
+
+LEO:  Never good.
+
+STEVE:  That's not.
+
+LEO:  All right, Steve.
+
+STEVE:  Okay.
+
+LEO:  I have not glimpsed.  I have not looked.  I have not...
+
+STEVE:  So I gave this little cartoon the caption "Uncertainty is the nature of the Universe."
+
+LEO:  Okay.  I feel like Ed McMahon.  "Uncertainty is the nature of the Universe."  I'm going to now scroll up and reveal - that's a cute little cartoon.  And, you know, it's interesting that the Heisenberg Uncertainty Principle is now so well known that you could actually do a New Yorker cartoon with this.  Right?
+
+STEVE:  And it would, yes, it would work.
+
+LEO:  And people would get it.
+
+STEVE:  Yes.  So we have kind of a professor-looking guy, staring at the map on the wall, trying to figure out, you know, where he's trying to go.  He is standing, we know this because it says above the map, he's in the Heisenberg Department of Physics.  And in keeping with the theme, the map has the legend with an arrow actually pointing to sort of a little scatter chart of dots.  It says, "You are probably here."  So, you know, you can't be certain because you are, after all, in the Eisenberg Department of Physics.  But anyway...
+
+LEO:  It does say something about how widespread knowledge of quantum mechanics has become, I guess; right?
+
+STEVE:  Yeah.  Actually there was a funny - I finished - and I'll talk about this a little bit later.  I finished "Project Hail Mary" last night. 
+
+LEO:  Rereading it, we should say.  Rereading it.
+
+STEVE:  My reread of, yes.
+
+LEO:  Yeah, yeah.
+
+STEVE:  And there was one point where, and I have to be careful not to do any spoilers, although, you know, the book is, I mean, anyone who's been following the podcast and listening to us and so forth is probably well aware of it.  But there was a point where there was a technology exchange.  And our main character, Dr. Grace, sort of commented to the person receiving the human store of knowledge that they're going to be really happy with everything they have received from humanity until they get to the bit about quantum physics.  Because, you know...
+
+LEO:  They're not going to be happy about that at all.
+
+STEVE:  That makes nobody happy.  It's like, nah, this is just...
+
+LEO:  Have we told you about string theory?  Oh, lord.
+
+STEVE:  Yeah.  Okay.  So the security guys at Expel Security - I thought that was...
+
+LEO:  That's a good name, yes, yes, Expel.
+
+STEVE:  We're going to expel this.  Expel Security have uncovered a passkey bypass using...
+
+LEO:  [Gasping]
+
+STEVE:  Yep.
+
+LEO:  Oh, no.
+
+STEVE:  ...an adversary-in-the-middle attack.
+
+LEO:  Uh-oh.
+
+STEVE:  Now, the vulnerability of Passkeys to this attack is actually understood.  It's well known.  It was a concession that was needed to be made for the sake of cross-device login, where you're using, you know, a passkey in your phone to log into a website on a browser somewhere.  The Expel Security guys just have three bullet points at the top of their blog's TL;DR section.  They said, first:  "	Bad actors have figured out how to downgrade FIDO key authentication when compromising accounts."
+
+Now, and we've often talked about downgrade attacks where, for example, an early one would have been the web client sends to a web server a list of all the protocols it supports.  And normally the web server would deliberately choose the strongest of those offered by the client, which it also supports; right?  So you take, like, you cross-reference the security protocols it has, the security protocols the client has.  The server chooses the best, that is, the most, the strongest of those.  But if you have an adversary in the middle, the adversary downgrades what the client is sending because of course we haven't established a secure connection at this point.
+
+This is the initial client hello.  So all of the good protocols are stripped out, leading the remote server to believe that the client, like, supports the paper cup and string protocol, which arguably is not very secure, and so it shrugs its shoulders and established a protocol that the man in the middle, the adversary there, is able to intercept.  So anyway, downgrade protocol.  "Bad actors have figured out how to downgrade [in a similar fashion] FIDO key authentication when compromising accounts."
+
+Second bullet point:  "	This technique is being leveraged in phishing attacks," meaning it's happening in the wild that passkeys are being bypassed, passkey authentication.  And finally:  "The attack involves tricking a user into scanning a QR code with a multifactor authentication authenticator, which includes passkeys."
+
+So their blog posting was titled "PoisonSeed" - which is the name they gave this - "downgrading FIDO key authentications to 'fetch' user accounts."  And they explain:  "Our SOC (Security Operations Center) has recently spotted a novel attack technique that involves socially engineering a target to get around the security protections provided by FIDO passkeys.  The attacker does this by taking advantage of cross-device sign-in features available with FIDO passkeys.  These features are designed to help users sign into their accounts on systems without a passkey by using an additional registered device, like a mobile phone.  However, the bad actors in this case are using this feature in adversary-in-the-middle attacks.
+
+"This is a concerning development, given that FIDO passkeys are often regarded as one of the pinnacles of secure multifactor authentication.  And while we haven't uncovered a vulnerability in FIDO keys, IT and SecOps folks will want to sit up and take notice.  This attack demonstrates how a bad actor could run an end-route around an installed FIDO key.  We have reason to believe that this attack was carried out by PoisonSeed" - oh, that's the name of the group, not the attack - "an attack group known for large-scale phishing campaigns designed to steal cryptocurrency from their targets' wallets.  However, the technique described here could easily be leveraged in other attacks."
+
+And then they take us through the details of the attack by explaining.  They said:  "The attack started with a" - and this is one that actually one of their client accounts was hit by, so they were able to get in there and reverse engineer what happened.  They said:  "The attack started with a phishing email sent to several employees at the company.  The email lured these users to log into a fake sign-in page hosted at okta[.]login-request[.]com."  They said:  "This page mimicked the general look and feel of the company's normal authentication process, including an Okta logo and sign-in fields for username and password.  However, not only is the domain hosting this fake login page suspicious, the domain itself had only been created a week before the attack."
+
+Now, I'm going to just pause here to say it's interesting that they provide that bit of detail.  We've recently noted that the registration age of any domain a user is visiting or, like, fetching, you know, for whatever reason, should always be raised as a massive red flag.  At the very least, any visit to a "freshly minted" domain ought to be brought to the user's attention.  I mean, maybe it's asking too much for many users.  But if nothing else it's an additional signal, right, a sanity check.  You know, maybe our web browsers or an add-on, or perhaps...
+
+LEO:  Yeah, I've mentioned this before, my NextDNS actually blocks it.
+
+STEVE:  Yes.  Yes.
+
+LEO:  Yeah, yeah.
+
+STEVE:  Right, right, that if it's too new, it's like, eh, no, you need to prove, you need to acquire a reputation before it'll be allowed.  So as I wrote here, "Highly security-conscious DNS resolvers" - like NextDNS - "should be checking the age of any domain names being resolved before they're visited."  Or perhaps, you know, maybe the page should be displayed - well, I was thinking in terms of the browser.  The page could be displayed, and the user could begin filling out any forms while the reputation is checked in the background, and the form's "Submit" function would only be unlocked once a domain reputation, including the domain's age, passed scrutiny.  You know, a user could always bypass such a block.  But bringing this to their attention and saying, just so you know, you're submitting this to a domain that's only a week old.  So does that surprise you?  If so, don't proceed.
+
+So anyway, I think, you know, somehow, except in your case, Leo, I'm glad that NextDNS does this because this is the kind of thing that responsible DNS providers ought to offer, at least as an option.  Anyway, so they said:  "Both this domain, and the aws-us3-manageprod[.]com domain the user is redirected to if they enter their credentials are hosted by Cloudflare."  They said:  "Leveraging reputable services like Cloudflare" - it's not Cloudflare's fault, right, they're just the hosting provider - "can make phishing scams appear more trustworthy, potentially lulling visitors into a false sense of security."  They said:  "The targeted user in this case had a FIDO key registered to secure their account.  Normally, the user would be required to physically interact with the FIDO key - touching it, for example - to confirm they're the ones logging in and are on the registered device or using a Passkey app.
+
+"If a user whose account is protected by a FIDO key in this case enters their username and password into the phishing page, their credentials [that username and password] will be stolen, just as with any other user.  But with a FIDO key protecting their account, the attackers are unable to physically interact with the second form of authentication.  This is where things took a turn," they wrote, "from your traditional phishing site.  After entering their username and password on the phishing site, the user was presented" - the user on the phishing site - "was presented with a QR code."
+
+And I have a picture of it in the show notes.  It shows "iPhone, iPad, or Android device.  Scan this QR code with the device that has the passkey for," and they blanked it out, but it would be the name of the site.  "This request comes from the app mstsc.exe by Microsoft Corporation."  And then there's a chunk of the QR code, but they blanked out a bunch so it wouldn't be legitimate.
+
+So they wrote:  "What happened behind the scenes is the phishing site automatically sent the stolen username and password to the legitimate login portal of the organization, along with a request to utilize the cross-device sign-in feature of FIDO keys.  The login portal then displayed a QR code.  Under normal circumstances, when a user wants to sign in to their account," they wrote, "from a different, unregistered device, they can still verify their identity if they've enrolled another authentication device.  In most cases, this would be an MFA authentication app installed on a mobile device, most of which include a QR code scanner.  The login portal displays a QR code after it receives the correct username and password, which the user scans with their MFA authenticator. The login portal and the MFA authenticator communicate to verify the login, and the user is granted access.
+
+"In the case of this attack, the bad actors have entered the correct username and password," which they got from the user, entering it into the phishing page, "and requested cross-device sign-in.  The login portal" - the legitimate login portal - "displays a QR code, which the phishing site immediately captures and relays back to the user on the fake site.  The user scans it with their MFA authenticator, the login portal and the MFA authenticator communicate, and the attackers are in."  In other words, it is a traditional phishing style attacker-in-the-middle, man-in-the-middle interception which also includes the optically communicated QR code.  With the passkey authenticator, the bad guys capture that, and they log in as the user.
+
+They said:  "This process, while seemingly complicated, effectively neutralizes any protections that a FIDO key grants and gives the attackers access to the compromised user's account, including access to any applications, sensitive documents, and tools such access provides."
+
+LEO:  And of course SQRL was not vulnerable to this.
+
+STEVE:  Well, it's an acknowledged weakness of any cross-device authentication.  SQRL had this weakness.  I went to extreme lengths to eliminate this possibility from any same-device authentication.  If you used SQRL's on-device app, which was available for all platforms, then any possible man-in-the-middle was excluded because the user's browser connected to the local SQRL client, which performed the authentication.  It then received the logged-in URL, that is, the SQRL client received the logged-in URL, which it forwarded to the user's browser.  So that cut out, explicitly cut out any man in the middle.  They were never able to obtain that logged-in URL.
+
+But this protection depends upon having a link between the user's browser and the authenticator.  And that's not available for typical cross-device authentication.  The device is able to see the QR code, but there's no way for the device to get a secret back to the user's browser.  So it authenticates to the site, which then authenticates the browser session, which is logged into the site, which in this case is the phisher's, the phishing session, not the phished user session.  So I wanted to share this with everyone so that this danger would be very clear.  You know, passkeys are a huge step forward, and they can prevent many other forms of abuse, if not - maybe it's all other forms, you know, except real wanton negligence.
+
+But a determined attacker in the middle that's able to engineer a spoofed phishing attack and convince a user to enter their valid username and password into a site, then intercept and forward their QR code for a cross-device passkey authentication, can still get themselves authenticated, even with passkey protected authentication.  So, you know, all the other things that can go wrong with usernames and passwords, you know, passkeys resolve.  But it's that cross-device authentication which is still the Achilles heel, which is why you really do want to put passkeys into the device where you're doing the authentication.  You know, the cross-device can be useful for bootstrapping.
+
+And as we know, the good news is the FIDO Group have now ratified a cross-ecosystem passkeys import and export.  And Apple has said they're going to support it.  And I'm sure everybody else is going to.  And we know that the browser add-on guys like Bitwarden and 1Password and so forth, they'll be supporting it, too.  So it's going to be possible to solve this startup problem that we've had for the first couple years of passkeys.  Cross-device authentication cannot be as safe as on-device authentication.  So that's what you want to use whenever you can. 
+
+LEO:  Sigh.
+
+STEVE:  Yeah.
+
+LEO:  I'm disappointed.
+
+STEVE:  Yeah.  And boy, Leo, I spent so much time working with the group that I was interacting with during this that, you know, we solved the problem, we solved this completely if you ran a SQRL client in the device you were authenticating on.  But there was just no way to, I mean, if you had a camera on the machine with the browser, then the URL received, the authenticated URL could have been displayed as a QR code on your phone, which you would then show to the camera that the browser had.  And that could link back.  So, I mean, there were some clunky ways to do it.  If you had NFC, or if you had common WiFi, or if you had Bluetooth.
+
+But all of those things are very messy, you know, they're just not, you know, zero-configuration solutions.  And what you really want is not to have this raise the bar of complexity to a level where people are like, I don't understand what's happening.  I'm just going to use my username because this is too - and it's of course failure prone, too.  The more other communication channels you need to have, the greater chance for one of them failing.  So, or, you know, getting hacked again.  So, yeah.  Still have a problem.
+
+LEO:  Yeah.
+
+STEVE:  For fear of allowing one of the biggest continuing problems the cyber-community still faces, which is ransomware attacks, I wanted to quickly note a couple of recent biggies:  South Korea's largest insurance company, Seoul Guarantee Insurance, got hit by ransomware last Monday.  The incident has severely disrupted the company's operations, and the company has been issuing handwritten loan guarantees to customers all week as it works to restore its affected systems.  And this is the third major South Korean company to experience severe business disruptions this year due to cyberattacks.  The country's largest telecom and its largest online bookstore both suffered similar disruptions.
+
+Also, the grocery distributor United Natural Foods has announced that they expect to lose up to $400 million in sales this year, following a ransomware attack last month which took multiple systems offline for days.  That downtime affected their ability to fulfill and distribute customer orders.
+
+Meanwhile, Australian airline Qantas, the big famous Australian airline, obtained an - this is odd - obtained an injunction to prevent individuals and organizations from using or publishing data stolen from them in a recent ransomware attack.  Okay.  That's a new one.  Since when do some foreign bad actors care about an Australian court order?  You know, the injunction suggests that the company is not willing to pay the ransom and is therefore expecting the hackers to leak the data.  Or maybe they just want to protect themselves from that leakage in any event.
+
+But it's difficult to see what they expect to gain.  Like, okay, we've got an injunction to prevent anyone from using the data that's been stolen from us.  Except that criminals stole it from you.  And I don't think the criminals care if you have an injunction against them, you know, in Russia or wherever they may be.  So anyway, I just wanted to just keep everybody aware that, like, it's business as usual, unfortunately, in the cyberattack and ransomware world.  As we've noted before, there's not even any sign that we are making any progress and improving our effective security.  This is now like a steady-state, constant background pain that companies that are online are suffering when bad guys get in.
+
+And, you know, we've talked about it before; right?  Employees, unfortunately, in large organizations are the weakest link.  As far back as that Sony Advanced Persistent Threat hack, what was it, 15 years ago or something, I said I sure wouldn't want that responsibility of, like, you know, having every employee never make a mistake, never make the mistake of clicking on a link in email?  How do you do that?  The problem is, it still is a weakness; right?  It's an effective problem.  Wow.
+
+In what's being called a significant turn of events, Cloudflare appears to have changed their longstanding policy of enforcing total Net Neutrality, at least within the UK.  The TorrentFreak site, which covers these sorts of Net Neutrality-related events, because that's kind of their focus in general, writes:  "Cloudflare has become the first Internet intermediary beyond local residential ISPs, to block access to pirate sites in the UK.  Users attempting to access certain pirate sites are greeted with Cloudflare's 'Error 451 - Unavailable for Legal Reasons' intercept page."
+
+LEO:  Oh.  That's weird.
+
+STEVE:  Yeah.  There actually is, HTTP 451 is, you know...
+
+LEO:  Wow.  It's new on me, new to me.
+
+STEVE:  Yeah.  We all know the 404; right?  There's a 451, Unavailable for Legal Reasons, is an official IETF error return.  So they wrote:  "In theory, ISP blocking should prevent UK users from even seeing this notice; but a combination of Cloudflare's blocking mechanism and choices made by some VPN users results in a piracy dead end."  Okay, so just to clarify what they mean when they write "ISP blocking should prevent UK users from even seeing this notice," what they mean is that, since ISPs are the entity that connects UK users to the Internet, ISP blocking should prevent users from ever connecting, from ever even being able to connect to a pirate website.
+
+That is, you know, Cloudflare is the host of these pirate sites.  And so you shouldn't be - an ISP should prevent their own users.  And the ISP of course is a UK ISP, so they're following UK court orders.  They're abiding by a block list.  And so users shouldn't get to the host.  And in this case Cloudflare is the host.
+
+The article continues:  "Internet service providers BT, Virgin Media, Sky, TalkTalk, EE, and Plusnet account for the majority of the UK's residential Internet market; and, as a result, blocking injunctions previously obtained at the High Court often list these companies as respondents.  These so-called 'no fault' injunctions stopped being adversarial a long time ago."  Right?  Where ISPs would, like, say no, we're not going to do that.  TorrentFreak wrote that:  "ISPs indicate in advance they will not contest a blocking order against various pirate sites, and typically that's good enough for the Court to then issue an order with which they subsequently comply."  So everybody's just getting along with this now.
+
+They wrote:  "For more than 15 years, this has led to blocking being carried out as close to users" - meaning their ISP, the so-called "last mile" - "as possible, with ISPs' individual blocking measures doing the heavy lifting.  A new wave of blocking targeting around 200 pirate site domains came into force last Monday the 14th, but with the unexpected involvement, they wrote, of a significant new player.  In the latest wave of blocking that came into force, close to 200 pirate domains requested by the Motion Picture Association were added to what was already one of the longest pirate site blocking lists in the world.  The big change is the unexpected involvement of Cloudflare, which for some users attempting to access the domains added yesterday displays the following notice."  And I've got it here in the show notes.  It's a big "Error HTTP 451," with a time code.
+
+LEO:  And now I know what that is.
+
+STEVE:  Yup, "Available For Legal Reasons."  And then as an explanation under what happened, they wrote:  "In response to a legal order, Cloudflare has taken steps to limit access to this website through Cloudflare's pass-through security and CDN services within the United Kingdom.  Find more information about the order, the party that requested it, and the authority that issued it here."  And the "here" was lit up in blue as a link that users who received this intercept page could click on.  And they said:  "Learn more about Cloudflare's approach to blocking orders in our Transparency Report on Abuse Processes," and then another link.
+
+"So when we've previously covered this issue, and we've applauded Cloudflare's adamant pro-Net Neutrality stance, we've cited Cloudflare's formal policy statement about this."  And this may sound familiar to our listeners because it reads - this is Cloudflare speaking:  "Because Cloudflare cannot remove content it does not host, other service providers are better positioned to address these issues.  Among other things, any blocking by Cloudflare is of limited effectiveness, as a website will be accessible if it stops using Cloudflare's network.  Cloudflare therefore regularly pushes back against attempts to seek blocking orders."
+
+So the point they're making here is they're sort of deflecting.  They're saying, if an ISP - they're saying users' local ISPs are the correct and better place for blocking enforcement because if somebody, if a pirate relocated from Cloudflare to anywhere else, well, the ISP would still block their domain.  It doesn't matter who's hosting their domain.  The domain is blocked.  So Cloudflare is saying, whereas if you tell Cloudflare to block a domain, well, they can move to a different host where the domain would not be blocked.  So this has always been Cloudflare's formal position.  You know, they're saying, you know, don't ask us to take responsibility for the content we're hosting because there are many other hosting providers."
+
+So TorrentFreak explains:  "Cloudflare notes that it may take steps to comply with valid orders if, among other things, that is, in this new HTTP 451 intercept page, if among other things 'principles relating to proportionality, due process, and transparency' are upheld."  They wrote:  "Whether Cloudflare pushed back here isn't clear, but the information made available turns out falls well short of that promised in the Error 451 notice.  That is, TorrentFreak followed those links and felt very unsatisfied by the disclosure that Cloudflare was offering  by those links."
+
+They said:  "With no central repository for blocking orders and no legal requirement to share details of injunctions with the public, transparency in the UK is mostly left to chance.  Some orders make their way online, but there's no guarantee.  For those interested in finding out more about the order affecting Cloudflare, the company provides a link which promises to reveal 'the party that requested it, and the authority that issued it.'  The link directs to the Lumen Database, which publishes information effectively donated by companies such as Google and Cloudflare for the purpose of improving transparency.
+
+"But in this case, there's no indication of who requested the blocking order, or the authority that issued it.  However, from experience we know that the request was made by the studios of the Motion Picture Association, and for the same reason the High Court in London was the issuing authority.  To the general public, the information is just a short list of domains.  If it wasn't for the efforts of Lumen, Google, and Cloudflare volunteering, the situation would be significantly less clear than that."
+
+So TorrentFreak here is noting and complaining that there's a real problem with a lack of transparency and accountability with the way the system is working now.  They add:  "The issue lies with dynamic injunctions; while a list of domains will appear in the original order (which may or may not ever be made available), when the MPA concludes that other domains that appear subsequently are linked to the same order, those can be blocked too, but the details are only rarely made public.  From information obtained independently, one candidate is an original order obtained in December of 2022, which requested blocking of domains with well-known pirate brands including 123movies, fmovies, soap2day, hurawatch, sflix, and onionplay."
+
+And they finished:  "What's odd is that the notice linked from Cloudflare doesn't directly concern Cloudflare.  The studios sent the notice to Google after Google agreed to voluntarily remove those domains from its search indexes, if it was provided with a copy of relevant court orders.  Notices like these were supplied, and the domains were de-indexed, and the practice has continued ever since.  That raises questions about the nature of Cloudflare's involvement here and why it links to the order sent to Google.  Notices sent to Cloudflare are usually submitted to Lumen by Cloudflare itself.  That doesn't appear to be the case here."
+
+So they're just sort of generically unsatisfied with Cloudflare's lack of transparency, maybe just that this all happened very quickly.  It's, you know, again, we don't know what's going on.  But what's interesting is that Cloudflare is now putting up HTTP 451 responses and blocking their own clients, access to their own clients.  Oh, and as for VPN circumvention, TorrentFreak wrote:  "When blocking measures are required, Cloudflare digs in when requests concern its public DNS resolver."  Which we'll be spending more time talking about at the end of the podcast, you know, 1.1.1.1.  They wrote:  "To achieve a similar effect, Cloudflare uses another technique instead."  Okay.  So I assume they mean that Cloudflare still adamantly refuses to muck up their master public DNS resolvers with filters.  And thank god for that.
+
+LEO:  Yeah, rightly so.
+
+STEVE:  Yes.
+
+LEO:  We've seen horrible things happen in the past when the International Soccer broadcasters blocked the DNS.
+
+STEVE:  Right, right.
+
+LEO:  It screwed up everything.
+
+STEVE:  Yes.  We need a strong universal DNS resolver that is not subject to the whims and needs of any particular industry or government.  And by the way, Cloudflare does offer 1.1.1.2 and 1.1.1.3, which are - .2 is family-friendly filtering.  Or no.  Okay.  One is malware only, one is malware and family friendly; or one is family friendly and one is malware.  Anyway, I know what they are, and they're now part of the DNS Benchmark.  But I don't have it off the top of my head.  But so Cloudflare is offering some filtering services.  But if you want an industry standard, absolutely clean DNS, I'm really glad to hear that they're saying no, we are not going to start screwing around with our DNS.
+
+TorrentFreak quoted Cloudflare, saying:  "In countries with laws that provide for blocking access to online content, Cloudflare may" - this is Cloudflare speaking, which TorrentFreak quoted.  "Cloudflare may geoblock websites to limit access in the relevant jurisdiction to those websites through Cloudflare's pass-through security and CDN services."  Okay.  So in other words, Cloudflare's not going to filter DNS, but they will, when required by law (typically taking the form of court orders), filter access to some list of sites they host based upon the location of the client making the connection to Cloudflare's network.  So they're able to do, as they said, geoblocking.
+
+TorrentFreak wrote:  "Cloudflare appears to be using geoblocking in the UK, as some VPN users will soon find out.  In normal circumstances," they said, "a VPN using a server in the UK will bypass ISP blocking no differently than a server located anywhere else in the world.  Users attempting to gain access to domains currently blocked by Cloudflare, using a VPN server in the UK, will be greeted by Cloudflare's Error 451 blocking notice instead."
+
+So what they're saying here is that, whereas in the past, basically any VPN would have been useful in jumping past that local, a user's local ISP's block, and it didn't matter where the VPN was terminated by its server, now that Cloudflare is implementing UK-wide geoblocking of content, above and beyond what ISPs may also be doing, any UK-based VPN users will need to be sure that they're terminating their VPNs at servers outside the UK, which would not then be blocked by Cloudflare, and that would have not been previously necessary when only their ISP was doing the blocking.
+
+And they concluded by noting that the scale of this blocking appears to be large, writing:  "Checking through the new domains blocked on the 14th, something else becomes apparent; they appear in multiple blocking orders, not just the ones highlighted in their article."  They said:  "We are unable to check all 200 domains, but at least potentially, hundreds or even thousands of domains could be involved.  And that may actually be a very good thing."  I thought, what?  Okay.
+
+They said:  "Domains blocked by Sky, BPI, and others don't appear to be affected, at least as far as we can determine.  All relate to sites targeted by the MPA; and the majority, if not all, trigger malware warnings of a very serious kind, either immediately upon visiting the sites, or shortly after.  At least in the short term, if Cloudflare is blocking a domain in the UK, moving on is strongly advised."  So I believe they're saying that the blocking Cloudflare has begun doing appears to relate to domains hosting malware, perhaps more than just those that the MPA may be grumbling about.  You know, so I could then see where Cloudflare is like 100% behind, you know, blocking of malicious websites or access to them.  That seems like a lower bar than getting into an argument over copyrights.
+
+So whatever the case, it appears that Cloudflare is simply doing, you know, they're abiding by the law as they're required to if they're going to operate in the UK, although it's a little sad or disappointing because I'm such a Cloudflare fanboy overall, the evidence is that Cloudflare doesn't seem to be explaining very clearly exactly what they're doing and why, at least not in the notice that TorrentFreak pulled up and looked at that they received last week.  The media just - it just happened.
+
+LEO:  They're in a tough business.  
+
+STEVE:  Yes.
+
+LEO:  I mean, they're really in a tough situation.
+
+STEVE:  Yes.  And, you know, I'll be talking a little bit more about this later.  But we're seeing more and more of this, where governments are increasingly mucking around in what used to be just a hands-off, you know, fully democratized Internet.
+
+LEO:  That's only because it was under the radar.  I mean, as soon as it became mainstream, they said, eh, we've got to control this.  We can't...
+
+STEVE:  Yup, that's exactly what I conclude, Leo.
+
+LEO:  Yeah, yeah.
+
+STEVE:  Is that, you know, we were all having fun before it mattered.  
+
+LEO:  Exactly.
+
+STEVE:  So the heat surrounding Internet user age verification  continues to increase.  I'm encountering an increasing level of pressure, just more and more, in the various news items that I survey.  For example, last Thursday Roblox posted an update which included this under the headline "Age Estimation."  They said:  "Roblox is investing an age" - and I think they meant investigating, or investing in, not clear - "an age estimation technology to help deliver tailored and developmentally appropriate experiences, while aiming to protect its community from those who might seek to do harm.  To add contacts as a 'Trusted Connection,' users must be 13 and over and confirm their age using a video selfie, which is analyzed against a large, diverse dataset to estimate their age.
+
+"Matt Kaufman, Roblox Chief Safety Officer, said:  'We know teens want more freedom to chat more freely with their friends.  We believe that unfiltered chat should only be made available to users who have been age checked, which is why we're using new Age Estimation tools to unlock access to Trusted Connections for those 13 and over.  We believe this additional freedom to chat more openly will reduce the incentive for teens to move interactions off platform, where they may be exposed to greater risk.'"
+
+So, okay.  You know how, I don't know, subject to maybe tampering or spoofing or whatever facial recognition can be, trying to guess someone's age.  I mean, I'm not a teenager.  No one's going to confuse me for that.  But still, you know, down in the 13 or so...
+
+LEO:  You look pretty young.  You could pass for 65 at least.
+
+STEVE:  Get me a wig, maybe, yeah.  So, okay.  There's that.  Steam reports that they're being pressured, if you'll pardon the pun, over some of their content by the payment processors, believe it or not, that they use.  In response, rather than risk losing their payment flows, Steam has reportedly removed thousands of games containing adult content, though what that is remains unclear, what exactly the content should be.  Last Friday, Eurogamer asked Valve for some clarification and then wrote this of their response.  They said:  "In response to questions from Eurogamer regarding Steam's new guidelines preventing 'certain types of adult content' from being distributed on the platform, Valve has provided some general background on the events leading to the decision.
+
+"A Valve spokesperson told Eurogamer:  'We were recently notified that certain games on Steam may violate the rules and standards set forth by our payment processors and their related card networks and banks.  As a result, we are retiring those games from being sold on the Steam Store because loss of payment methods would prevent customers from being able to purchase other titles and game content on Steam.'"  So, okay.  In this case, thousands of titles are being removed - without regard for the age of the user - in what appears to be a case of, I don't know, looks like blackmail censorship by Valve's payment providers.
+
+So I'm sure it must be clear to everyone by now that the need to verify the age of Internet users is not off someday in the future.  You know, we need the W3C or the IETF or perhaps the FIDO Alliance, you know, if any of them could move at anything other than glacial speed to get busy, you know, and whip up some standards because we need some technology here.  Then we need Google and Apple to implement them in their biometrically equipped devices.  And my concern is that these things are so expensive, you know, these high-end smartphones that there would be a place for someone like a next-generation Yubico, you know, to create cute, inexpensive little spoof-resistant thumbprint authenticators that would follow the same specification, which unfortunately doesn't yet exist.  And we need all of that yesterday because the need for age verification is today.
+
+So imagine that a Yubico-type thumbprint sensor/age-verifier existed.  If you have a biometrically lockable smartphone, then you wouldn't need an extra gadget because the phone you've got would be able to do that.  But as I said, my concern is that such smartphones are very expensive, so we need a $20, $30, $40 alternative.  If you don't have some suitably-equipped smartphone, you buy an inexpensive gadget from a local retailer, a neighborhood electronics store, outlet, whatever.
+
+So in my little thought experiment here, how do we arrange to create the binding between the user's biometric and an assertion of their age, and how do we do it at scale?  Someone who wishes to enroll their iPhone, their biometric Android device, or some inexpensive theoretical thumbprint verifier takes their chosen device to any U.S. Post Office, in the U.S. the DMV, maybe AAA, if you have a membership, or any notary like is available at any UPS store in the United States.  You show them your government-issued ID proving your age.  They check it carefully for forgery, look at you, look at your ID, and then have the user in front of them authenticate with their chosen biometric - their face or their thumbprint, depending upon their device, after which the agent uses their own device, any NFC-equipped phone or terminal or Bluetooth or whatever, to essentially bless and activate and lock that biometric-to-age binding.
+
+Now this individual is in the possession of a biometrically-locked age assertion which they can use, on demand, anywhere in cyberspace that it's needed.  Again, we don't have the protocols.  We don't have, as far as I know, any little, well, there is no protocol, so there's nothing for anybody to implement on any platform at this point.  But, you know, there's a little bit of brainstorming about how we might begin to solve this problem.  And this is, you know, it's a good thing, Leo, that I'm very committed right now to the projects that I have in front of me because, you know, this is pulling me in the same way that SQRL pulled me 10 years ago, and we know how that went.  There went seven years of my life.  But anyway, it seems to me this is, like, so necessary. 
+
+A bit later in today's podcast, in answer to one of our listeners' questions, I'm going to sketch out an example of a cryptographic protocol to provide, again, just a rough sense for some more of the details of this.  But my overall point is that the problem is not intractable; but it's not easy, either.  And people need to get moving on this, and I don't see any sign of this happening.  Even though Yubico's founder Stina Ehrensvard has moved onto other passions, I dropped her a note yesterday as I was writing this.  You know, she's the perfect kind of person to shake things up and get the industry's attention and get this moving.
+
+I did get email back from her.  I found it waiting for me this morning, saying that she does have a - she's established a nonprofit which is - it doesn't seem focused on age.  But she's still on the identity crusade.  She did, you know, I did tell her about my concern over the need for some sort of workable privacy-respecting age verification.  And she said that that's what she was doing and wanted to set up a conference and see how we could collaborate.  And I, again, I don't want to get too sucked into something because I've got work to do.  But it's just, to me, this seems like one of the biggest needs we have because the world is started to wake up to the Internet, it seems.  And the age of the people using it is suddenly a big deal.  So we need protocols.  I hope somewhere that's beginning to happen.
+
+In other news, it appears that Microsoft remains unsure what to do about the fact that no one appears to actually want their new crap, especially in light of the fact that Exchange Server in this case is switching to a subscription.  What a surprise.  You know?  I guess no one should be surprised that no one is in a big hurry to switch to subscription mode.  Everyone wants to just keep using the stuff they already have that's working just as well as any of the new stuff probably would, especially when they already paid for the stuff that they have that's all installed and running and configured and working just fine.
+
+So in this case we're talking about Exchange 2016 and 2019 Server, whose End Of Life is scheduled for that same fateful day approaching us on October 14th, when Windows 10 and some other Microsoft products that no one wants to be forced to stop using were originally scheduled to stop receiving their security updates.
+
+But because users of Exchange Server are not just some rando consumers, anyone who has so far refused to jump at the opportunity to switch to their marvelous new pay-as-you-go subscription plan for Exchange Server is going to need to pay up.  And Microsoft says, that's it.  We're serious this time.  No, really, no kidding, this is it.  You're actually going to have to do this.  They actually wrote:  "Don't even bother asking for more."
+
+So last Tuesday's Exchange Team Blog posting under the headline "Announcing Exchange 2016/2019 Extended Security Update program."  They wrote:  "With both Exchange 2016 and 2019 going out of support in October 2025, we've heard from some of our customers that they have started their migrations to Exchange Subscription Edition" - literally it's SE for Subscription Edition - "but might need a few extra months of Security Updates for their Exchange 2016/2019 servers while they're finalizing their migrations.
+
+"We are announcing that we now have a solution for such customers.  Starting on August 1st, 2025" - so the end of this month, August 1st - "customers can contact their Microsoft account team to get information about and purchase an additional six-month Extended Security Update (ESU) for their Exchange 2016/2019 servers.  Your account teams will have information related to per server cost and additional details on how to purchase and receive ESUs, starting August 1st, 2025."
+
+Now, logic would suggest that the "stay right where I am for the next six months" plan will cost more than the "that subscription sounds great, sign me up" plan.  And no one ever accused Microsoft of leaving any money on the table.  So it will almost certainly cost those foot-draggers more than getting on with the new plan.
+
+Microsoft continued, writing:  "So what does this mean?"  They said:  "First, this ESU is not an 'extension of the support lifecycle' (Microsoft Lifecycle Policy | Microsoft Learn) for Exchange 2016/2019.  Those servers still go out of support on October 14th, 2025, and you will not be able to open support cases for them, unless directly related to an issue with an SU released to ESU," that is, a Service Update released to ESU customers during the ESU period.
+
+So they said:  "The ESU is not an extension of the support life cycle."  Okay, I don't understand why because that's what they're selling you.  They said:  "This ESU is a way for customers who might not be able to finalize their migrations to Exchange SE (Subscription Edition) before October 14th, to receive Critical and Important updates, as currently defined by Microsoft Security Response Center scoring, as SUs (Security Updates) that we might release after October 2025."  Okay.  So I guess what they're saying is you have to have signed up for the subscription, but we understand you may not have yet finished migration to the subscription servers, from your non-subscribed servers, Exchange Server 2016 and 2019.  So you can buy additional support for them in order to bridge.
+
+They said:  "Exchange 2016/2019 SUs (Service Updates) will not be released on public Download Center or Windows Update after October 2025."  So they're still trying to be as strict here as they can.  They also said:  "	We are not committing to actually releasing any service updates during the ESU period."  Meaning you pay for it, and you may not get anything.  They said:  "Exchange Server does not necessarily receive security updates every month on Patch Tuesday, as security updates are released only if there are Critical or Important security product changes.  Therefore, if there are no SUs that we need to release during the time of ESU, there will be no such updates provided.  We will, however, confirm with ESU participants each Patch Tuesday whether an SU was provided or not.
+
+"This ESU will be valid," they said, "for six months only, through April 14th, 2026.  And," they wrote, "this period will not be extended past April 2026.  You do not need to ask."
+
+So anyway, that's the story.  If you are an enterprise, you're not going to be ready by October 14th to stop receiving any security updates for your existing Exchange 2016/2019 servers, then you can buy any that may occur.  I wonder if you could wait to see if any occur and then buy them then.  I don't know.
+
+Anyway, they finish explaining, they said:  "Customers using Exchange 2019 should in-place upgrade to Exchange SE quickly and switch to the Exchange SE modern lifecycle policy."  Meaning, yes, the modern lifecycle policy, also known as the "We'll no longer allow you to purchase it.  In these modern times you now keep paying for it forever."
+
+So anyway, for what it's worth, the wonderful and clever folks over at 0patch, you know, it's numeric zero, P-A-T-C-H dot com.  The 0patch guys do provide patches for Exchange Server.  And they do so on very reasonable terms.  So it might be more cost-effective to consider remaining with the already paid-for-in-full Exchange Server you already own, and then having the 0patch folks keep it up to date for you.  Basically they recreate Microsoft's patches.  They reverse engineer them, and then offer them, like you don't even have to reboot Exchange Server.  Right?  I mean, it's like way better than Microsoft.  Until April 14th, when those older servers will no longer be receiving security updates for the micropatch guys to reverse engineer.
+
+And I don't know whether they can look at the security updates for the next generation of Exchange Servers and backport them to the earlier editions of Exchange Server.  We'll have to see at that point.  But don't forget those 0patch guys.  They're going to be friends of Windows 10 users also starting October 14th as we talked about before.
+
+Okay.  So, wow.  A new Russian law has - get this, Leo - criminalized online searches for controversial content.  Russia previously criminalized the sharing of such content, or obtaining it, but with officials saying that censorship during wartime is justified, that is, they're using their war with  Ukraine as the context here, they're saying restrictive digital laws are justified and being tightened.
+
+The Washington Post reported on this last Thursday, writing:  "Russian lawmakers passed controversial legislation Thursday" -  meaning last Thursday - "that would dramatically expand the government's ability to punish Internet users, not for sharing forbidden content, but for simply looking it up.  Like putting the search term in.  The new measures, which sailed through the Russian parliament and will take effect in September, envision fining people who 'deliberately searched for knowingly extremist materials' and gained access to them through means such as virtual private networks, or VPNs, which lets users bypass government blocks.  VPNs are already widely used in Russia to circumvent the many blocks on websites," the Washington Post wrote.
+
+"Russia defines 'extremist materials' rather broadly, as content officially added by a court to a government-maintained registry, a running list of about 5,500 entries at the moment, or content produced by 'extremist organizations' ranging from the LGBT movement to al-Qaeda.  The new law also covers materials that promote alleged Nazi ideology or incite extremist actions.  Until now, Russian law stopped short of punishing individuals for seeking information online.  Only creating or sharing such content was prohibited.  The new amendments follow remarks by high-ranking officials that censorship is justified in wartime.  Adoption of the measures would mark a significant tightening of Russia's already restrictive digital laws.
+
+"Similar legislation," they wrote, "passed recently in neighboring Belarus, Russia's close ally ruled by authoritarian leader Alexander Lukashenko, and has been used to justify prosecution of government critics.  The fine for searching for banned content in Russia would be about $65, while the penalty for advertising circumvention tools such as VPN services would be steeper  $2,500 for individuals and up to $12,800 for companies.
+
+"Sarkis Darbinyan, an Internet freedom activist whom the Russian authorities have labeled a foreign agent, said:  'The fines imposed for searching for extremist materials in this iteration may be minor, but this can be grounds for detention, pressure, or a pretext to be escorted to the police station.  I am most afraid that in the next iteration, administrative fines will turn into criminal cases.'
+
+"Previously, the most significant expansion of Russia's restrictions on Internet use and freedom of speech occurred shortly after the February 2022 full-scale invasion of Ukraine, when sweeping laws criminalized the spread of so-called 'fake news' and 'discrediting' the Russian military.
+
+"The new amendment was introduced Tuesday, attached to a mundane bill on regulating freight companies, according to documents published by Russia's lower house of parliament, the State Duma" we've talked about before.  "Net Freedoms, an advocacy group, said in a statement:  'Lawmakers have repeatedly used this cunning tactic of quietly inserting repressive measures into dormant, previously introduced bills.  It allows them to accelerate the legislative process  moving through the second and third readings in a single day  and to avoid public scrutiny.'
+
+"On Wednesday, as news of the censorship amendments sparked widespread concern in Russian media, lawmakers pushing the bill sought to downplay fears that citizens would be penalized for browsing the web.  Senator Artem Sheikin, one of the bill's authors, told state-controlled news agencies that the new measures are not intended to punish individuals for accessing prohibited websites using VPNs.  'Reading Facebook or scrolling through Instagram,' Sheikin said, 'does not constitute an administrative offense.  The main focus is on regulating providers.'  He said:  'There is no plan for mass punishment of users.'  He claimed that liability would only attach in cases of knowingly searching for and accessing content officially designated as extremist by a court and added to a Ministry of Justice blacklist.  However, he did not explain how authorities would determine whether an individual knew the accessed content was deemed extremist."
+
+Anyway, things are tightening up in Russia.  And they used the term "throttling," talking about how Russia has also expanded its use of deep packet inspection technologies, enabling more precise blocking of traffic and committed millions of dollars to fortify what we know as, you know, Russia Net or Runet.  It's creating this sovereign Internet infrastructure that allows them to pull the switch and disconnect Russia from the rest of the global Internet.  They also said that telecom providers have been ordered - and we've talked about this before - to provide  detailed user data, while citizens are being pressured to use domestic platforms instead of foreign ones by throttling or restricting platforms such as YouTube, X, and Instagram as the Russian government seeks to limit access.
+
+And, you know, we talked about the use of the term "throttling" because Cloudflare sites were recently added to this throttle technology where a page was limited to 16K bytes if it came from Cloudflare which, as I observed, was really not enough to run any, like, even begin to get a modern web page off the ground.  Maybe you could do a 301 Redirect.  Well, you could do that in 16K.  And that was the only explanation that I could come up with.  But as we've said, any site that had content that was of interest to Russians could just move to a Russian hosting provider in order to get around that block.  Which is probably the whole goal here.
+
+So for me, this news is disturbing.  I'm not in Russia.  But Russia is an extreme example of what we're seeing everywhere, this general tendency globally from the world's governments.  The UK and the EU are chafing over encryption and arguing against fundamental privacy rights.  Here in the U.S., we've seen the Supreme Court just approve the means by which various extreme special interest groups will be able to criminalize essentially any Internet speech that they dislike or deem to be unwholesome.  The definition in the legislation that the U.S. Supreme Court just approved is very worrisomely broad.
+
+And as I was saying, Leo, before, it feels as though for the first 50 years of the Internet, it was not well understood, and sort of remained out of bounds for the world's governments and politicians.  Or as we noted, perhaps it just didn't matter all that much until just the past decade or so.  We enthusiasts were all having a great time playing in our sandboxes with our technologies.  But now the political adults have returned, and they're scowling at the things that we've been up to.
+
+LEO:  Yeah.
+
+STEVE:  I don't know.  I mean, it's...
+
+LEO:  I don't know what the answer is.  I mean...
+
+STEVE:  It does feel like it's all changing.
+
+LEO:  Yeah, yeah.  Rapidly.
+
+STEVE:  Yeah.  Let's take another break, and then we're going to talk about a bunch more stuff.
+
+LEO:  Good stuff.  Important stuff.
+
+STEVE:  And some listener feedback.
+
+LEO:  And of course 1.1.1.1.
+
+STEVE:  We're going to get there, too.
+
+LEO:  More Cloudflare news coming up.
+
+STEVE:  Yup.
+
+LEO:  All right, Steve.  On we go.
+
+STEVE:  So people may want to pick up a temporary "burner" Android phone when traveling to China, if they're an Android phone user.  Turns out that Chinese authorities are using a new forensic toolkit to extract data from Android phones.  Yeah.  The new tool, named "Massistant," is being used at border checkpoints and by local police forces.  It's able to extract geolocation data, images, SMS messages, contacts, and other data from third-party messaging apps.  According to the mobile security firm Lookout, Massistant appears to be the successor of a previous tool used by authorities named MFSocket.
+
+So, and just as another note, anyone switching to the use of a burner phone should probably begin using it sometime before the trip so that it can accrue some believable history.  There have been instances of people being further harassed when their use of a burner was made obvious by its lack of any extractable historic data.  You know, you give the authorities an empty phone, and they stare at you and go, okay, where's the phone you actually use?
+
+LEO:  Of course there's a certain irony in this because same thing happens when you enter the United States if you're a foreign national.
+
+STEVE:  And actually it's funny you mention that.  This mailing and the show notes went out yesterday afternoon, and I got a note from a listener saying, for what it's worth, the U.S.A. is just as bad.
+
+LEO:  Right.  They do the same thing.
+
+STEVE:  And I actually, I included that in next week's show because I wanted the reality check that, yes, it's not like our hands are completely clean in this, either.
+
+LEO:  You know, in general, I think if you're going to travel internationally, you need some sort of plausible deniability.  Maybe get a Chromebook and, I don't know, a burner phone and...
+
+STEVE:  Wow.
+
+LEO:  I don't know.  It's sad that we have to do that.  You know, honestly I have no plans to travel outside the U.S. for the foreseeable future for that reason.
+
+STEVE:  Yeah.  It's changed.
+
+LEO:  It's changed.  I love to travel.  I love China, by the way.  I love visiting China.  It's an amazing country.
+
+STEVE:  Yeah.  Yeah.  After encountering the following bit of news, it occurred to me that perhaps remote web management access of any kind, regardless of how well authenticated its designers and deployers certainly believe it to be, it's really risen to the status of the much-heralded buffer overflow or overrun.  It just, it tops the list of recurring, ubiquitous, really dumb things to do.
+
+The news is that, once again, security researchers, this time with the Shadowserver Foundation, have found web shells, that is, installed by, you know, maliciously installed web shells on almost 80 Fortinet FortiWeb firewalls.  The Shadowserver Foundation believes the web shells were installed after hackers exploited a recently patched vulnerability (CVE-2025-25257).  The bug - here it comes again - is a pre-auth SQL injection in the firewall's web panel.  Fortinet has not yet confirmed in-the-wild exploitation, which I thought was humorous.  Apparently they're the last to know, since 80 individual instances of a Fortinet FortiWeb firewall compromise ought to be pretty easy to confirm.  Sounds like they just may not want to pull their head out of the sand and be in any big hurry to confirm it officially.
+
+But anyway, again, you know, historically it's been buffer overruns.  That's been the mistake everybody keeps making.  Well, it now looks like that's been supplanted by web portal compromises.  We seem unable to put up a web portal whose authentication cannot be bypassed.  So of course my conclusion is, so don't put them up.  Just restrict them in a way that is actually strong and useful, rather than relying on a username and password.  That's just, no, bad idea.  I wanted to mention before we talk about listener feedback that last night I finished my very pleasurable reread of Andy Weir's "Project Hail Mary" novel.
+
+LEO:  Oh, good.
+
+STEVE:  Yeah.  And Leo, I have absolutely no idea how anyone could possibly turn this into a hypercondensed two-hour enjoyable movie which is in any sense faithful to the book.
+
+LEO:  Right.
+
+STEVE:  I would not want to be the screenwriter or the director.  We're going to find out next March 20th, which is its release date.  I don't doubt that people who have never read the book will still love the movie.  I think it looks like it's going to be a really fun movie.  But the book was really terrific.  And whatever the movie will be, I can't see how it could possibly be anything but the roughest of outlines of the events in the book.  And I was surprised.  Lorrie said that she felt some of the physics was kind of beyond her.  She didn't, you know, track it all.  I'm, okay, I mean, there's a lot of science in there.  And I think she actually was being modest.  I think she understood most of what was going on.
+
+But, you know, certainly a lot of that won't make it into the movie because that would be way past your typical audience and probably isn't necessary.  I think that's what an enthusiast who reads the novel wants.  But anyway, I did immediately purchase Andy's second novel, "Artemis."  And it's now loaded into the five Kindles which I use.
+
+LEO:  Why five Kindles?
+
+STEVE:  Oh, I have one Kindle device.  I've got one iPhone and three iPads.  And I move among them from, like...
+
+LEO:  As one does, yeah.
+
+STEVE:  Yeah, yeah.  So I have my iPhone in my pocket, I've got a Kindle mini on my nightstand next to the bed, I've got one on a big pad downstairs, and then one on my Kindle device, the Oasis that I love.  And I'll take that with me like if I'm going to be offsite somewhere, you know, like I'm doing transport for a friend or something, and I'll have some time to kill where I can't really do anything else.  So anyway, I'm going to read "Artemis," and I'll let people know what I think.
+
+LEO:  Good.
+
+STEVE:  Okay.  Bob VanMeeteren said:  "Hi, Steve.  Just wanted to write" - oh, I love this - "that a SpinRite Level 3 refresh of my 2017 Kindle fixed my issue."  And he wrote as if I already knew that he had an issue.  I couldn't find any reference to any previous feedback from him or writing to support or anything.  And he said:  "Thank you for this amazing product."  He said:  "I'm also a loyal Security Now! listener since 2019 and grew up with a Speak & Spell."  Oh, yeah, that's the Speak & Spell right there behind me, that orange thing.
+
+LEO:  Yeah, yeah.
+
+STEVE:  He said:  "So thanks for that, too."  Because I was involved in its development.  Anyway, so thank you, Bob.  We can infer from his note that he has an eight-year-old Amazon Kindle that developed some sort of problem.  Of course during the 3.5-year SpinRite 6.1 development we learned much more than we knew there was to learn about the surprising age-related decline in the performance and reliability, which are closely related, of solid-state storage.  We also learned that SpinRite's ability to recover data that's become marginal, coupled with its rewriting of solid-state data, more often than not completely reverses this decline and rejuvenates storage.
+
+As an avid Kindle owner myself who often exports books from the device for archiving, I am well aware that connecting a Kindle to a PC allows the PC to view the Kindle's storage as a solid-state drive.  And that's all SpinRite needs to be able to work its magic on any device such as a Kindle.  We sometimes hear from people asking whether SpinRite is able to similarly repair and restore like an Android smartphone or other devices.  And we tell such people that, if their device allows itself to be placed into a mode where its storage is visible as a storage drive, then the chances are very good that, as Bob found with his well-used Kindle, SpinRite can restore the device's proper operation and its prior performance.
+
+LEO:  Kind of amazing.  That's great.
+
+STEVE:  So, very cool.
+
+LEO:  It even works on a Kindle.  Remind us, before you go on, what did you do for the Speak & Spell?
+
+STEVE:  I was involved in the LPC, the Linear Predictive Coding of the speech.  I was involved - the AI Lab at Stanford had...
+
+LEO:  So early speech synthesis.
+
+STEVE:  It was very early speech synthesis, yes.
+
+LEO:  Wow.
+
+STEVE:  Yeah.  So...
+
+LEO:  Impressive.
+
+STEVE:  It was fun.  And back then, I want to say it has 4Kb of ROM.
+
+LEO:  That sounds about right, yeah.
+
+STEVE:  It's about right.  And consider that it...
+
+LEO:  Just, like, 1K.
+
+STEVE:  Yeah, 4Kb of ROM.
+
+LEO:  It's half a K.
+
+STEVE:  And so for that thing to speak at all is crazy.  You know, and, I mean, it sounds awful.  It sounds like a robot.  I've got it back here.  I'll stick some batteries in it.  Like spell relief, you know.
+
+LEO:  But you could understand it.  I mean, it worked.
+
+STEVE:  Oh, yeah.  It did work, and it was astonishing at the time.
+
+LEO:  It's a shame you didn't keep it up.  You could be making hundreds of millions of dollars a year in AI research right now.
+
+STEVE:  Well, this was done, I don't know if TI ended up with the patents on LPC, Linear Predictive Coding.  But I think - but I know that Stanford produced some of the early work and research.  So maybe they took it and refined it or [crosstalk].  
+
+LEO:  I'm sure they profited from it, yeah.
+
+STEVE:  Yeah, as often happens.
+
+LEO:  Yup.
+
+STEVE:  Alan Hague said:  "Hi, Steve.  Love the podcast, for decades now, and SpinRite.  The new version really helps with my TiVo drive, which is large."  He said:  "In a recent Security Now! you mentioned that you no longer worry about AI since it has no intent."  He said, "I like the 'I want a lollipop' scenario.  But it seems to me that if AI has ingested ALL sci-fi books, then it has many ideas of what a human might do when threatened.  Could AI simply respond to a stimulus by using what it has learned shows could be a proper response?  Couldn't it therefore replicate itself, disable electronic controls or worse, without intent?  Thanks for all you do for us all.  Alan Hague in Indianapolis."
+
+And just a note, his note reminded me of my TiVos, and I know you had them, too, Leo, which I still miss to this day.  You know, that company, for its day, got so much right.  While we have vastly more options than we once did, it was once so nice having everything gathered in one place.  Today it's necessary to go hunting around for shows among so many disparate services.  But in any event, it's very cool that SpinRite is still useful in keeping Alan's TiVo alive.
+
+And as he says, TiVo's drive being large means that, before SpinRite 6.1, a full drive recover and refresh cycle would have taken quite some time, during which there would have been no media recording or playback on the TiVo.  So with 6.1 being so much faster, that means much less downtime.  And props to you, Alan, for keeping your TiVo going.  I was forced to give mine up some time ago when I went digital, and I wanted to play with all the other services.
+
+As for his notes about AI's possible negative reactions, I'm still 100% happy having settled upon the statement that mankind has not yet created an artificial intelligence.  What we've been working toward for the past 100 years, although, you know, very rudimentarily in the beginning, amounts to increasingly good simulated intelligence.  I really like the term "simulated intelligence."  I like it because it delineates itself from "true intelligence" I think in exactly the right way, and I believe that it helps us to disentangle ourselves from the very seductive struggle to understand exactly what it is that we've most recently created.
+
+You know, we clever monkeys have managed to create an extremely convincing and compelling simulation of true human intelligence.  But no matter how good that simulation may be, it's fundamentally different from the actual human intelligence that went into creating it.  A recording of an opera singer can be indistinguishable from the original singer, but the recording is not the opera singer.  A simulation is not the same as the real thing.
+
+And to your point, Alan, if an AI trained on sci-fi - as certainly they will all have been, at least in part, if they've been trained on Internet-accessible material because there's a lot of sci-fi available on the Internet - if it were to be prompted with language that's threatening, and if it was not otherwise restrained from answering without filtering, I agree it would be likely to respond according to its training, which might be as we would expect a truly intelligent machine to respond because that's what it's simulating.  But that would only be because what we have today are high-fidelity simulations of truly intelligent machines.
+
+Forty years ago, 40, four zero years ago, Edsger Dijkstra, the quite famous Dutch computer scientist and professor who's considered to be the father of "structured computer programming" - he created, he was the inventor, the first conceiver of the notion of what we now call "structured computer programming" - he wrote an essay about the similar claims being made at the time of intelligent machines, and this was 40 years ago and previous.  So he was writing retrospectively.  One of the things that he wrote in his takedown of this concept of machines being intelligent was so pithy that it stuck with me.  He wrote that the question of whether computers can think is just as relevant and just as meaningful as the question of whether submarines can swim.
+
+LEO:  I love that.
+
+STEVE:  Isn't that good?
+
+LEO:  Wow.  Let me think about that a little bit.  That's great.
+
+STEVE:  Yeah.  He said he wasn't - he said:  "The question of whether computers can think is just as relevant and just as meaningful as the question of whether submarines can swim."
+
+LEO:  Wow.
+
+STEVE:  So he wasn't a believer.  And at least as regards what we have today, I think he is still just as correct as he clearly was 40 years ago.  Today, we may have far better submarines, but that does not make them fish.
+
+LEO:  Love it.  Well said.
+
+STEVE:  Eric Southwell said:  "Hello, Steve and Leo.  LONG TIME" - all caps, his emphasis - "listener of the show.  I eagerly await each episode.
+
+"Getting to the point, I don't understand why this 'age verification' problem is so intractably hard to solve.  The U.S. government has several databases that must include all of us.  For citizens, the Social Security Administration has all of our info.  For non-citizen residents the government has other databases that have unique numbers associated with people, and, importantly, their birthdays.
+
+"Can't we invent a secure process where we people somehow generate a hash, or are provided a hash, of just our name and birthday?  Possibly we generate this hash on a government website that asks for other data to 'prove' who we are.  Later, when asked to prove our age to a different website, we provide the hash.  The hash can be checked against the database of hashes for proof of age.  The only data transmitted is the hash data.  By design, the response from the age verifying service would be only Yes to allow access or No to prevent access.
+
+"I'm probably missing something obvious.  It's just that it seems like we could use cryptography to provide data that's anonymous to a requester, but can be verified against a database (that already exists) in order to prove our age or identity."  He says:  "Heck, maybe a QR code would do the trick.  Or even TOTP from an authenticator app.  Or public/private key pairs.  Anxious to hear your thoughts.  Eric."
+
+Okay.  So there are two primary issues.  The first is spoofing.  As long as there have been age-based restrictions on what someone can do or cannot do, there has been pressure to spoof one's age.  The concept of the "fake ID" is so ubiquitous and deeply rooted right into our culture that it's not even a meme any longer.  It's way beyond a meme.  You know, there's no one who hasn't heard of a fake ID.  The primary classic reason for having and using a fake ID is so that its holder may fraudulently assert that they're older than they truly are.
+
+In the physical world, a higher quality fake ID will sport a photo of its underage holder.  This makes contesting the ID when it's presented much more difficult.  The other use case is the use of someone else's, you know, some other older person's actual ID.  In that case, the question is whether the photo on the ID is that of the person presenting it.  In the first case we have a falsified identifier for the person holding the ID.  And in the second case we have a legitimate identifier for a different person.
+
+So the first and largest problem as we transition into the cyber realm is how to prevent the spoofing of anyone's age assertion.  This is why I've consistently referred to the need for tight biometrics as a necessary component of any effective online age verification system.  If someone simply has a hash or a QR code or a public/private key pair, nothing prevents any of those technologies, which are all inherently anonymous, from being shared with others.  The time that would be required for an underground marketplace in fake online age assertions to be established would best be measured in microseconds.  I mean, it would just be - it would instantly come into existence.
+
+Therefore, any technology that asserts someone's age must, absolutely must somehow be tied to unspoofable biometric parameters that uniquely identify that person.  This suggests that facial and fingerprint recognition pretty much need to go hand-in-hand with any form of online age verification at the time of its assertion.  And this, of course, presents a sticky wicket because not everyone has uniform access to some sort of biometric technology.
+
+But I said there were two important issues.  The second one is no less important, and that's privacy.  It will almost certainly be very important to people who wish to authenticate their age, for whatever reason there may be, that they not be individually identified as part of the requirement for doing that.  This is where last week's zero-knowledge proof business comes in.  We need the ability to make a go/no-go, over 18 years of age or not, or maybe it's over 13, or maybe it's Apple's age ranges in order to create fuzziness.  We need to make that assertion, and that assertion alone, without revealing anything else about ourselves.  And this suggests that we need some sort of proxy, a proxy to which we biometrically authenticate, to then make this assertion on our behalf.  But we also don't want that proxy to obtain any information about the website to which we wish to authenticate.  So we need to have a lot of blinding here.
+
+So, for example, the cryptographic tools we already have and already know well kind of provide us with a framework for a solution.  For example, just off the cuff, some website that must authenticate our age before we're permitted to enter could present a large cryptographically unique random token.  We've talked about many times before how trivial this is to generate.  The site simply encrypts a counter which only ever counts up using a secret per-site key.  The output of that encrypted counter will be a pseudorandom token that has never been seen before and will never be seen again.  To this token the site appends the age-assertion that the site requires its visitor to validate.
+
+The user then needs to arrange to have that compound token signed by an age-assertion provider.  This could be anyone who participates in this system, like Apple or Google or Samsung, who have the necessary biometrics on their device, or anyone who's able to assert that they will somehow arrange to only ever sign an age assertion for someone whose age they have verified matches that assertion.  So it can be, you know, broadly specified, but whatever that agency is, their reputation is on the line when they sign this assertion.  And note that the entity that's being presented this age assertion to sign knows nothing about the entity or website that generated the assertion.  It's just a random token with an age assertion appended to it.  So the user's privacy is preserved.
+
+The signed assertion is then returned to the user, and from the user then to the website, which verifies that the assertion is one that it recently issued, and that it has not yet been used - since it must be single use - and that it matches the token that was issued for this user's current browser session, so that that signed assertion from someone older can't be sent, given off to somebody younger to use.  It's got to be the current browser session.  The asserter's signature is verified against the root certificates in what would become in this future environment the industry's common age-assertion root store.  You know, in the same way that we have web browser root certificates, we would have age-assertion root certificates in a common store, you know, common storage.  And the user is then admitted, having passed these tests, to the age-controlled website.
+
+And so in this scenario there are a lot of manual processes.  With some additional thought, it would be possible to automate and streamline this process using QR codes and so forth.  So my point is, this is a solvable problem.  This is not beyond us.  But it needs to happen.
+
+To me it's extremely annoying that the U.S. Supreme Court ruled that no one's First Amendment rights to protected free speech would be abridged by the imposition of this quite onerous requirement, that is, age verification.  You know, as we all know, at present the industry has no means whatsoever for asserting anyone's age without sacrificing all of their privacy and their individual identity.  So it's very much like the UK, exactly like the UK saying, you know, you must give us access to anyone's messages we ask for while absolutely preserving everyone's privacy.  You can't have it both ways.  And so here's the Supreme Court just saying, yeah, everyone must be able to assert their age.  But no one's going to do that because it's going to be a complete loss of privacy, and we have no mechanisms in place for this.
+
+So, you know, this imposition of age restriction significantly changes the nature of the Internet.  Some of our listeners have forwarded links to me since I began talking about this more to  commentary written by authors of websites containing, for example, salacious adult content that's far more tame than the legislation's initial targets are aimed at.  Yet that adult content falls within the very broad legislation's scope.  So the point has been made that this is only the initial foray, and that the underlying goal is to force the removal from the Internet of any content that a minority of the U.S. public may find unacceptable.  The Internet we have tomorrow may look much different from the one we have today.  In some ways it'll be better.  But unfortunately, the control that is now beginning to be asserted can always be misused.  So I don't know, Leo.
+
+LEO:  Yeah.  We'll just watch, and this is the place to watch as it evolves.
+
+STEVE:  We're going to make that technology happen, right here.
+
+LEO:  Yeah, yeah.  I think there may also be legal reasons you can't use the Social Security Administration or the IRS databases to verify age.
+
+STEVE:  Actually, the law says you can't use a Social Security Number, yeah.
+
+LEO:  For identification.  And I don't - I think that there are lots of reasons why that data, despite the fact that DOGE is actually now trying to unify it all, that data should be protected from widespread use for other purposes.
+
+STEVE:  I think we clearly need a privacy preserving, you know, some sort of age assertion system that everyone understands isn't revealing anything about them, but whether or not they are a certain age.
+
+LEO:  I'm sure somebody's got to be working on that.
+
+STEVE:  Stina referred to something called wwWallet, which she said was an open source effort.  And there are some, the EU has some sort of a wallet technology.  I don't yet know what the details are.  And, you know, it's got to be widespread.  It's got to be in our smartphones.  And I just - the other thing that bugs me, Leo, is that I can't see how this cannot - how this can possibly be free.  So what we're saying is that...
+
+LEO:  That's not okay, either.  You have to pay.
+
+STEVE:  Exactly.  We are having to de-democratize the Internet.  Right now, you know, you're not charged for access other than putting up with ads and tracking.  But I can't see how we're going to be able to verify age without some technology that involves biometrics, and that can't - I don't see how we make that free.
+
+LEO:  I think the best, honestly the best we could do is to put it in the hands of the parents.  I know that's not a perfect solution.  You can't...
+
+STEVE:  Well, that only solves the problem with kids.  How do adults who want to prove their age do so?
+
+LEO:  Well, then you don't have to because you're presumed, if you don't have a parent blocking you, that you're an adult.
+
+STEVE:  That doesn't work for what the U.S. Constitution just said, I mean, the U.S. Supreme Court just said that sites can require positive confirmation that someone is over...
+
+LEO:  An actual age.
+
+STEVE:  Over 18.
+
+LEO:  Right.
+
+STEVE:  And so it's not just - so it would be a - it can't just  be a device saying that I'm old enough because there's no proof of that being true.  You know, 17 year olds could have a device that says that.  So it's a mess.
+
+LEO:  All right.  Let's talk about - can you call it Quad 1?
+
+STEVE:  Yeah, actually, that be a lot easier than, yeah, that would be a lot easier than saying 1.1.1.1 every time.  So I'm going to say that.  During the podcast, Quad 1.
+
+LEO:  Okay.
+
+STEVE:  Because I've written 1.1.1.1, and I got tired of just writing...
+
+LEO:  I know, it's a lot of ones.
+
+STEVE:  Writing it all out, it is.
+
+LEO:  Dotted quads were not designed to be typed.
+
+STEVE:  So I have not mentioned anything about my discoveries resulting from my pretty much incessant use of the new and still developing GRC DNS Benchmark.
+
+LEO:  I'm excited about this.
+
+STEVE:  It's really turning out very cool.
+
+LEO:  Yay.
+
+STEVE:  But I've just added a new feature, and it's like, okay, I swear it's the last one I'm going to put in.  But I thought it would be very cool to allow its users to enter any domain name they want, and then check it against all the DNS providers in the list to see whether they are filtering it or not, to be a DNS filter checker in addition to just being a performance checker.  So it's getting - it's broadening its scope a little bit, but in ways that I think are useful for the future.  So, you know, and I don't want to go back to it again, so I'm putting everything in that I can think of that would be useful.
+
+So what I suspect most of the Benchmark's users are going to discover is that, if you didn't have something like the Benchmark to more carefully customize and personalize or confirm your own choice of optimal DNS resolvers, you probably could not go very wrong choosing any of Cloudflare's DNS solutions.  Although they're not alone among the Benchmark's top-rated resolvers, they're always near the top, Cloudflare is, and I've been quite impressed with what I've seen.  I'll have a lot more to say about that before long.
+
+I'm mentioning this today because, exactly one week ago, as I mentioned at the top of the show, on July 14th, while we were recording this podcast, from just before 3:00 p.m. to just before 4:00 p.m. - so right now it's 3:50.  So one week ago at this time, 1.1.1.1, I'll say it one time, Quad 1, was gone.  It was not resolving.  It was off the air.  Which is, you know, earthshaking, really, because this resolver is so popular.  They suffered, Cloudflare suffered a significant outage which caused their wildly popular primary DNS resolver, that Quad 1 IP, to disappear from the Internet for an hour.  The details surrounding this event are extremely interesting, and I thought everyone would enjoy learning about not only what happened, but also why and how.
+
+So before I start by sharing the introduction of their report, I want to note that this is precisely why standard best practice on the Internet has always been to configure a pair, at least a pair, of DNS resolvers for use by every connection to the Internet.  "Stuff happens," as they say.  So anyone whose Internet connection was configured to use both of Cloudflare's IPs, Quad 1 and its secondary backup of 1.0.0.1, assuming that 1.0.0.1 did not also go offline, and I was never able to confirm that either way, I'm not sure that they're not referring to both as 1.1.1.1.  So it might actually be, it might make more sense to use a different provider for, if not a secondary, then a tertiary DNS.
+
+But in any event, the concept is to have two different DNS resolvers.  And if you had that, and assuming that Quad 1 went offline, but 1.0.0.1 did not, then users would have only noticed a brief stutter when Quad 1 stopped responding.  Operating systems, all of them, their TCP/IP stacks that do this DNS resolution, they will first reissue their UDP DNS queries under the assumption that the UDP packet that went out and tried to come back may have been dropped either to or from that remote resolver.
+
+Then, once the primary resolver has failed to respond to a couple of retries, all DNS resolvers that are configured on that Internet interface will simultaneously be queried in parallel, and the OS will then switch to using the first one to reply.  So a nearly transparent switchover from Quad 1 to 1.0.0.1 would have occurred for many people during that hour-long outage.  Just you wouldn't maybe have noticed anything, assuming that 1.0.0.1 had stayed up.
+
+And one last point:  Lest anyone worry that their LAN's network border router may only be assigning a single DNS IP, which is aimed at itself, to their PCs inside the LAN, this is a common configuration, and it should not be any cause for concern.  In these scenarios, the LAN's router is serving as the proxy for the public-facing DNS resolvers and is using DHCP (Dynamic Host Configuration Protocol) to configure the client machines on its LAN to ask it for any of their DNS resolution needs.  And then it will in turn forward those DNS queries to one or more of its configured public resolvers, which are in turn often configured and provided by the connection's ISP, using also DHCP on the WAN side interface.
+
+Okay.  So what happened at Cloudflare to cause a massive hour-long worldwide outage of their flagship DNS resolver?  Here's what they shared.  They wrote:  "On July 14th, 2025, Cloudflare made a change to our service topologies that caused an outage for 1.1.1.1" - I can't help myself saying it - "Quad 1 on the edge, resulting in downtime for 62 minutes for customers using the Quad 1 public DNS Resolver as well as intermittent degradation of service for Gateway DNS.
+
+"Cloudflare's Quad 1 Resolver service became unavailable to the Internet starting at 21:52 UTC and ending at 22:54 UTC.  The majority of 1.1.1.1 users globally were affected.  For many users, not being able to resolve names using 1.1.1.1 Resolver meant that basically all Internet services were unavailable.  This outage can be observed on Cloudflare Radar."
+
+Okay, now, I'm going to pause here because this Radar page of theirs is very cool.  I have its link in the show notes, and I've also made it this week's GRC shortcut.  So you can just go to grc.sc/1035, grc.sc/ today's episode number, 1035.  Or click the link in the show notes, and that just bounces you to the same place.  Anyone who is interested in DNS at scale will find this page very interesting.  For example, the second chart shows the overall usage ratios of the four DNS protocols for their Quad 1 resolver.
+
+LEO:  I wouldn't have thought this at all.
+
+STEVE:  I know.  So, yeah.
+
+LEO:  Wow.
+
+STEVE:  Traditional DNS over UDP currently commands an 86% share.  In a very distant second place is DoT at 7.1%, then DoH at 4.7%, and plain unencrypted TCP at 2.2%.  Now, although modern browsers have settled upon using DoH for their use of privacy-enforcing DNS, when Android devices are configured to use private DNS with Cloudflare's, that's DoT.  Or any private DNS, the various private DNSes that Android can be configured for are DoT by default.  And DoT is often preferred by IoT devices and enterprises.  So that's why it's in second place, although, wow, a very distant second place, you know, at 7.1%.  And of course the reason is DNS has always been UDP.  So it still holds a grip on 86% of all DNS resolutions.
+
+Another interesting data point is that Cloudflare's Quad 1 resolver receives 62.6%, so just shy of two thirds of its requests for IPv4 addresses; whereas queries for IPv6 addresses make up 18.8%.  So IPv6 requests is nearly one fifth of the total, whereas IPv4 is two thirds.  So yes, it's clear that IPv4 still rules, although, you know...
+
+LEO:  Less than I would have thought, to be honest, yeah.
+
+STEVE:  Yeah, yeah, exactly, for 20%, nearly 20%, 18.8% to be IPv6, that's still pretty good.
+
+LEO:  Yeah.  I mean, obviously people who are using 1.1.1.1 are more sophisticated than a normal user; right?
+
+STEVE:  Yeah.
+
+LEO:  They have somebody fancy in the house.
+
+STEVE:  They've deliberately chosen that because it's not their ISP's DNS.
+
+LEO:  Right.  I would suspect fewer than 1% of all Internet users use a custom DNS.
+
+STEVE:  Yes.  Yeah.  It's just, look, it works.  And, you know, it's going to go to their ISP, who's rubbing their hands together because they're getting all of the DNS lookups.
+
+So I'll note that the DNS Benchmark tends to favor resolvers having IPv6 addresses, meaning that GRC's DNS Benchmark, which now supports all of those protocols, IPv4, IPv6, DoT and DoH, consistently finds that resolvers with IPv6 addresses respond slightly faster than resolvers addressed with IPv4.  And Cloudflare does have a similar pair of IPv6 resolvers.  But my god, Leo, the IP is just from hell.  I mean, it's like, well, you know, all the IPv6s.
+
+LEO:  It's very long.
+
+STEVE:  Yeah.  And so it's not fun to say or fun to type.  But once you do it, you end up with a slightly faster DNS.  So anyway, lot's of interesting stuff on that page.  I commend it to anybody who's interested.
+
+So let's continue with Cloudflare's explanation of who tripped over what cord at headquarters.  They wrote:  "The outage occurred because of a misconfiguration of legacy systems used to maintain the infrastructure that advertises" - okay, and this is weird jargon that BGP uses, so I'll explain this in a minute - "that advertises Cloudflare's IP addresses to the Internet.  This was a global outage.  During the outage, Cloudflare's 1.1.1.1 Resolver was unavailable worldwide."
+
+LEO:  Wow.
+
+STEVE:  Yeah, I know.  It's just it's breathtaking.  "We're very sorry for this outage," they wrote.  "The root cause was an internal configuration error and not the result of an attack or a BGP hijack.  In this blog, we're going to talk about what the failure was, why it occurred, and what we're doing to make sure this doesn't happen again."
+
+They wrote:  "Cloudflare introduced the Quad 1 public DNS Resolver service in 2018.  So that's interesting to know.  It is seven years ago.  Since the announcement, Quad 1 has become one of the most popular DNS Resolver IP addresses, and it is free for anyone to use."  And, yeah, like why wouldn't you use it?  I mean, it is often faster - actually, I wonder if it's never not faster, which would be to say as always faster - than the ISP.  I think it's always faster than my Cox automatically assigned DHCP IP or DNS resolution, which is astonishing.  But we'll talk about why in a minute.
+
+They wrote:  "Almost all of Cloudflare's services are made available to the Internet using a routing method known as anycast, a well-known technique intended to allow traffic for popular services to be served in many different locations" - it should say served "from" many different locations - "across the Internet, increasing capacity and performance.  This is the best way to ensure we can globally manage our traffic, but also means that problems with the advertisement of this address space can result in a global outage."
+
+Okay.  So let's talk about, let me take a break here and talk about "anycast" for a second.  Several weeks ago we mentioned that the European Union had introduced a set of its own DNS resolution services for its EU member citizens.  I immediately added all of their DNS IP, DoT and DoH addresses to GRC's default list of resolvers for the Benchmark.  And I remembered mentioning on the podcast that I was quite a bit put off by their sluggish performance.  In retrospect, this was to be expected since the Benchmark was actually communicating with DNS resolvers operated by Whalebone and located in the Czech Republic.  And while that may be right around the corner for users in the EU, it's on the far side of undersea cables and many router hops from my location in Southern California.
+
+I confirmed subsequently with many of our EU-located DNS Benchmark pre-release testers that these same DNS4EU resolvers operate quite acceptably well for anyone who's located near them.  In other words, for those DNS4EU resolvers, their actual real-world performance will be a direct function of how far away the client is from the location of those physical servers whose IP addresses the client is accessing.  These resolvers have so-called UNICAST IP addresses, where traffic addressed to those addresses will be routed across the Internet to wherever it is they're located, wherever their servers are.  And this is completely fine for EU citizens since those servers will be close by.  And the EU certainly doesn't wish to expend their resources arranging to make their DNS4EU fast for me in the United States.  That's not a priority for them.
+
+Okay.  So what's different about Cloudflare and their Quad 1 IP?  That 1.1.1.1 Cloudflare IP is an ANYCAST address, where the IP does not refer to any specific physical resolver hardware.  So any traffic addressed to that IP is NOT routed to some resolver located at a specific location.  Instead, anycast addresses will automatically route to the closest Cloudflare data center.  This means that whereas the performance of the DNS4EU IPs is determined by the client's location and their distance from the EU, Cloudflare, being a major global network provider, will have a data center that's close to everyone, and that single ubiquitous Quad 1 IP will automatically cause any client's DNS lookup traffic to be routed to that closest data center for its resolution.
+
+It's an extremely slick system.  I mean, it's the way CDNs operate.  And it explains how Cloudflare is able to offer their super-high-performance DNS services from a single universal IP, no matter where its clients may be located.  You know, this is the whole idea of a CDN having an edge appearance near you, meaning an edge of their network is very few router hops away from where you're located.
+
+Okay, so back to Cloudflare.  They wrote:  "Cloudflare announces these anycast routes to the Internet in order for traffic to those addresses to be delivered to a Cloudflare data center, providing services from many different places.  Most Cloudflare services are provided globally, like the 1.1.1.1 public DNS Resolver, but a subset of services are specifically constrained to particular regions.
+
+"These services are part of our Data Localization Suite, which allows customers to configure Cloudflare in a variety of ways to meet their compliance needs across different countries and regions.  One of the ways in which Cloudflare manages these different requirements is to make sure the right service's IP addresses are Internet-reachable only where they need to be, so your traffic is handled correctly worldwide.  A particular service has a matching 'service topology' - that is, traffic for a service should be routed only to a particular set of locations."
+
+Now, Leo, they just said that they're talking about data localization suite and services only being available within specific locations.  Which sounds suspiciously like this large collection of domains that dropped off the 'Net for the UK at exactly the same time of this outage.
+
+LEO:  Ohhh.  Very clever.
+
+STEVE:  Isn't that interesting.
+
+LEO:  Yeah.
+
+STEVE:  So they wrote:  "On June 6th, during a release to prepare a service topology for a future DLS service, a configuration error was introduced."  Get this.  "The prefixes associated with the Quad 1 Resolver service were inadvertently included alongside the prefixes that were intended for the new DLS service."  Okay.  So just to be clear, that fundamental configuration error which lumped the universal availability of the Quad 1 DNS IP in with some others occurred back on June 6th, when they were preparing.  Not in July.  So it was more than a month old when it happened.  
+
+They explain:  "This configuration error," they wrote, "sat dormant in the production network as the new DLS service was not yet in use, but it set the stage for the outage on July 14th.  Since there was no immediate change to the production network, there was no end-user impact.  And because there was no impact, no alerts were fired."  Their report then lays out a detailed minute-by-minute and hour-by-hour timeline of what they call "the event."
+
+At 21:48 UTC, just before 3:00 p.m. during last week's podcast recording, you know, the "you know what" started to hit the fan. They detailed this.  They said:  "A configuration change was made for the DLS service.  The change attached a test location to the non-production service.  This location itself was not live, but the change triggered a refresh of network configuration globally."  Meaning a BGP rerouting of traffic.  And I'll explain more about that in a second.
+
+They said:  "Due to the earlier configuration error linking the Quad 1 Resolver IP address to our non-production service, the Quad 1 IP was inadvertently included when we changed how the non-production service was set up.  The Quad 1 Resolver prefixes started to be withdrawn from production Cloudflare data centers globally."
+
+Okay.  So as I said, everything we're talking about here is BGP (Border Gateway Protocol) which we've covered a number of times in the past.  Generally with BGP, when something goes very wrong with the Internet due to its misconfiguration, that's what's going on, you know, such as a mistake attempting to route all of the Internet's global traffic through a pawn shop in Lower Slobbovia.  You know, that never turns out well for anyone.  So something similar happened again, and with a similar outcome.  Internet traffic is great, and it works incredibly well, right up until it utterly fails.  And then it generally fails big.
+
+So at 21:52 they wrote:  "DNS traffic to Quad 1 Resolver service begins to drop globally."  At 22:01:  "Internal service health alerts begin to fire for the 1.1.1.1 Resolver, and a formal incident event is declared."  	At 22:20:  "A fix is deployed.  A 'revert' was initiated to restore the previous configuration.  To accelerate full restoration of service, a manually triggered action is validated in testing locations before being executed."  At 22:54:  "The 'impact' ends.  Resolver alerts are cleared, and DNS traffic on Resolver prefixes return to normal levels."
+
+Okay.  So what was the impact of this?  There are some interesting details there, too.  They write:  "When the impact started, we observed an immediate and significant drop in queries over UDP, TCP and DNS-over-TLS."  And they wrote:  "Most users have 1.1.1.1, 1.0.0.1" - and then they list their two IPv6 IPs, which are 2606:4700:4700::1111, or same thing and then 1010 configured as their DNS server.  They said:  "It's worth noting that DoH (DNS-over-HTTPS) traffic remained relatively stable as most DoH users use the domain cloudflare-dns.com, configured manually or through their browser, to access the public DNS resolver, rather than by IP address.  DoH remained available, and traffic was mostly unaffected as cloudflare-dns.com uses a different set of IP addresses.  Some DNS traffic over UDP that also used different IP addresses remained mostly unaffected, as well."
+
+They said:  "As the corresponding prefixes" - meaning BGP routing prefixes - "were withdrawn, no traffic sent to those addresses could reach Cloudflare.  We can see this," they said, "in the timeline for the BGP announcements.  And there is a - it's lower down on that same radar page I talked about before.  You see a spike in traffic where the withdrawals happened, and then an hour goes by, and another spike when the announcements, when the proper prefixes are being re-announced.  The second spike is when they have realized how to fix what has gone wrong and then apply that.  And the announcement of the update to the routers spreads out across the Internet." 
+
+One last bit of interesting charting that they provide I thought was very cool.  It's shown as a green chart down at the bottom of the radar.  They said:  "When looking at the query rate of the withdrawn IPs, it can be observed that almost no traffic arrives during the impact window.  When the initial fix was applied at 22:20 UTC, a large spike in traffic can be seen before it drops off again.  This spike is due to clients retrying their queries.  When we started announcing the withdrawn prefixes again, queries were able to reach Cloudflare once more.  It took until 22:54 UTC before routing was restored in all locations, and traffic returned to mostly normal levels."
+
+So it's very cool.  That chart shows the 90 minutes before the event, everything is just puttering along more or less straight line, then it just utterly disappears.  Bang.  It's like a sharp edge, drops straight down to zero.  Which is what we would expect once the entire Internet has essentially forgotten what to do with that IP.  That's what this means is the Internet, all the routers on the Internet have just - they have no idea what to do with those IPs.  
+
+Then, at 22:20, the traffic just as suddenly skyrockets to about six or seven times its normal level.  And as they wrote, DNS clients that were at that moment just discovering the outage and were retrying, would have been frantically sending DNS packets out, retrying their queries, basically creating an artificial tsunami which can be seen at the Cloudflare resolvers once routing had been restored.  Their postmortem posting then digs deeper into how and why this happened.  I'll share one paragraph of it, and see if this doesn't sound hauntingly familiar to what we heard CrowdStrike explain almost exactly one year ago, last July, after they caused the crash of 8.5 million Windows machines.
+
+Cloudflare wrote, just last week Cloudflare wrote:  "The way Cloudflare manages service topologies has been refined over time and currently consist of a combination of a legacy and a strategic system that are synchronized.  Cloudflare's IP ranges are currently bound and configured across these systems that dictate where an IP range should be announced, in terms of datacenter location, on the edge network.  The legacy approach of hard-coding explicit lists of data center locations and attaching them to particular prefixes has proved error-prone since, for example, bringing a new data center online requires many different lists to be updated and synced consistently."
+
+Okay, and here it comes.  They wrote:  "This model also has a significant flaw in that updates to the configuration do not follow a progressive deployment methodology.  It's not progressive.  Even though this release was peer-reviewed by multiple engineers, the change did not go through a series of canary deployments before reaching every Cloudflare data center."  In other words, just as with CrowdStrike, there was what turned out to be too much confidence placed in their automation.  So deployment was all at once, and not incremental or tested, basically in place, before it was let loose upon the entire planet.  And as they say, lessons learned.
+
+After sharing a bunch more detail, including how the inadvertent withdrawal of the Quad 1 routing revealed an underlying, but inconsequential BGP hijack originating from Tata Communications in India, they conclude, writing:  "Cloudflare's 1.1.1.1 DNS Resolver service fell victim to an internal configuration error.  We're sorry for the disruption this incident caused for our customers.  We are actively making these improvements to ensure improved stability moving forward, and to prevent this problem from happening again."
+
+And after rereading all this, Leo, and seeing that they talk about all four of those IPs together, my guess is that they're always referring to them collectively as their 1.1.1.1 Resolver, but that all four of those probably dropped off the Internet because they would have all four been served by the same data centers, all which stopped receiving their incoming packets.  So my guess is that if somebody, as most people would have, had 1.1.1.1 and 1.0.0.1 configured as their primary and secondary DNS, I'll bet you for an hour they had no Internet access, appreciably.  I mean, no effective ability to look at the DNS addresses to look up the IPs of their domains.
+
+LEO:  Wow.  Wow.
+
+STEVE:  So, which explains the mea culpa there because of like, yikes.  Yes, that would have been a problem.  So they are already moving forward toward a better and less error-prone system to support their future growth.  If nothing else, this mishap, much as it showed CrowdStrike a year ago, showed them the value of the planning that they have been undertaking and deploying, and that they're making a necessary and important investment.
+
+I've got all the links to the original report and the Cloud Radar graphs at the end of the show notes for anyone who's interested.  And, boy, if you were wondering, if you were, as I imagine our listeners probably were, yeah, 1.1.1.1 and 1.0.0.1, now you know what happened.
+
+LEO:  Just shows how to pin it on a DNS resolver.  We are.  I mean...
+
+STEVE:  Oh, completely.  I mean, it is so crucial to the operation of all of the services that we now just take for granted on the Internet.
+
+LEO:  So where do we stand on the DNS Benchmark Pro?
+
+STEVE:  That last feature I mentioned is finished, the ability to do a large, huge, wholesale analysis of filtering against domains.
+
+LEO:  That's really useful.  I'm glad you're adding that.  I mean, adding features is a way to slow it down, but that's a good one.  I think that's a very useful one.
+
+STEVE:  I just think it really does make sense to be able to quickly see that with any domain name you want.  So you just put "test domains" in, and it'll quickly...
+
+LEO:  What I can't see is very important.
+
+STEVE:  Yeah, it'll show you what, you know - and confirm that your resolver is filtering what you would hope it would be.
+
+LEO:  Yeah.
+
+STEVE:  Because, you know...
+
+LEO:  Good point, yeah.
+
+STEVE:  So anyway, and that's why 1.1.1.2 and 1.1.1.3 are now there, because they are filtering DNS, and you can actually see them in real-time doing that.
+
+LEO:  Right, right.
+
+STEVE:  Anyway, so that's done.  I got a little sidelined on throttling because it turns out that this thing is so busy, it's got so much juggling at the same time, that throttling with the number of outstanding queries is tricky because I'm also checking, like, the DNS for EU resolvers.  And from where I am, they're very slow.  So I don't want to - so that means that suddenly a lot of queries are outstanding, and it tends to stall the Benchmark.  So I'm just in the process, when I stopped working on it Saturday night to begin working on the podcast Sunday morning, I was in the process of coming up with a system which will age the queries that are outstanding and only throttle if they are younger then a cutoff so that I won't get penalized for resolvers that are taking much longer to reply.  Anyway, the end-user sees none of that.  They just go, oh, look, it works.
+
+But anyway, I'm very close to being done.  Windows 11 allows the OS itself to be configured to use DoH.  So I need to do a little special handling of that.  And then I need to spend some time with the command line features because I'm sure they're badly broken.  But anyway, all the heavy lifting is done.  It supports all the protocol.  You know, people test every time I do a release.  People write back and go, well, this just works, and it's been working for like the last 12 releases.
+
+LEO:  Nice.
+
+STEVE:  So it's like, okay.  I'm sure I'll break something.  So anyway, we're getting close.
+
+LEO:  You're having fun.  That's the most important part.  You really dig it; don't you.
+
+STEVE:  I'm having fun, and I'm going to create a next-generation very useful Benchmark.
+
+LEO:  Nice.  Nice.
+
+Copyright (c) 2025 by Steve Gibson and Leo Laporte.  SOME RIGHTS RESERVED.  This work is licensed for the good of the Internet Community under the Creative Commons License v2.5.  See the following Web page for details:  https://creativecommons.org/licenses/by-nc-sa/2.5/.
+
+
