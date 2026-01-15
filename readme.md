@@ -12,4 +12,15 @@ The .py files are for:
 
 ## TLDR for Google's NotebookLM
 
-Download [summarized001-1035.zip](/summarized/summarized001-1035.zip), extract and upload to a notebook. Slowly. When I tried, it rejected random ones. I'd do 5 files at a time.
+Download [summarized001-1059.zip](/summarized/summarized001-1059.zip), extract and upload to a notebook. Slowly. When I tried, it rejected random ones. I'd do 5 files at a time.
+
+## Tidbits
+
+### Missing Episodes
+
+Some episodes don't have transcripts on grc.com. These are typically holiday weeks when Steve and Leo took a break:
+
+- **Episodes**: 436, 487, 540, 592, 643, 695, 747, 798, 851, 903, 954, 1006, 1058
+- **Pattern**: Roughly every 51-52 episodes (annual holiday breaks)
+
+The scripts handle these gaps gracefully - they're simply skipped during download.

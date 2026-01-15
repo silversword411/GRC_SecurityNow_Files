@@ -1,0 +1,1033 @@
+GIBSON RESEARCH CORPORATION		https://www.GRC.com/
+
+SERIES:		Security Now!
+EPISODE:	#1049
+DATE:		October 28, 2025
+TITLE:		DNS Cache Poisoning Returns
+HOSTS:	Steve Gibson & Leo Laporte
+SOURCE:	https://media.grc.com/sn/sn-1049.mp3
+ARCHIVE:	https://www.grc.com/securitynow.htm
+
+DESCRIPTION:  The unsuspected sucking power of a Linux-based robot vacuum.  Russia to follow China's vulnerability reporting laws.  A pair of Scattered Spider UK teen hackers arrested.  Facebook, Instagram, and TikTok violating the EU's DSA.  Microsoft Teams bringing user WiFi tracking by policy.  You backed up.  That's great.  Did you test that backup?  Coveware reports all-time low ransomware payment rate.  Ransomware negotiator reports how the bad guys get in.  Lots of listener thoughts and feedback about NIST passwords.  And against all reason and begging credulity, it seems we still haven't managed to put high-quality random number generators into our DNS resolvers.
+
+SHOW TEASE:  It's time for Security Now!.  Steve Gibson is here.  He's got the story of an Android robot vacuum that doesn't suck.  Well, maybe it does, actually.  We're going to talk about the arrest of two UK hackers.  Steve's going to be a little bit sympathetic to their plight.  We'll talk about how ransomware gets in, and then the sad return of a bug in DNS that was fixed in 2008.  That and a whole lot more coming up next on Security Now!.
+
+LEO LAPORTE:  This is Security Now! with Steve Gibson, Episode 1049, recorded Tuesday, October 28th, 2025:  DNS Cache Poisoning Returns.
+
+It's time for Security Now!.  I know you wait all week for this.  I do, too.  Every Tuesday Steve Gibson joins us to talk about the latest in security, privacy, technology in general.  Hello, Mr. G.
+
+STEVE GIBSON:  Yo, Leo.
+
+LEO:  How are you today?
+
+STEVE:  It's great to be with you.  Great.  Believe it or not, one of our old friends is back this week, DNS Cache Poisoning.
+
+LEO:  I thought we'd handled that.
+
+STEVE:  We thought, well, how long ago was 2008?  17 years?
+
+LEO:  Yeah.  Yeah.
+
+STEVE:  You'd think that 17 years we could have gotten it right.
+
+LEO:  Yeah, yeah.
+
+STEVE:  No.  So that's our title for today, "DNS Cache Poisoning Returns," for this 28th of October, pre-Halloween, pre-daylight savings time doing whatever it's going to do on Sunday, Episode 1049.  And I was glad to hear before that you are as confused as I am about...
+
+LEO:  Absolutely.
+
+STEVE:  When you fall back, does that mean that it's earlier or later, and what happens.
+
+LEO:  Every six months I have to do this math in my head.  I think, because we move but UTC doesn't, I think we - I don't - we're now minus eight is what I think, instead of minus seven.
+
+STEVE:  I do like the spring, when we spring forward, because that makes it easier to set your digital clocks forward an hour.  It's much easier to...
+
+LEO:  Do you still have a clock you have to set?
+
+STEVE:  Oh, yeah.  I like clocks.  We've got...
+
+LEO:  But all my clocks set themselves.  No, I have analog clocks, but they all set themselves.
+
+STEVE:  Yeah, well.
+
+LEO:  You have a Westclox?  You've got to turn the knob on the back?
+
+STEVE:  We've got a bunch of - believe it or not, we have a bunch of fun things to talk about.  We're going to talk about the unsuspected sucking power of a Unix-based robot vacuum.  
+
+LEO:  Oh, boy.
+
+STEVE:  And what it's sucking is not your dust.
+
+LEO:  Oh, boy.  Oh, dear.  Okay.
+
+STEVE:  We've got Russia to follow China's vulnerability reporting laws, to no good end for the West.  A pair of Scattered Spider UK teen hackers were arrested.  And I'm just - it's so sad.  I mean, 18 and 19 years old.
+
+LEO:  You're always - yeah.
+
+STEVE:  Your life is screwed.  Facebook, Instagram, and TikTok are violating the EU's DSA.  What's going to come of that?  Microsoft Teams is bringing user WiFi tracking by policy to the Teams platform.  Doesn't that sound like a great idea?  I know.  So you backed up.  That's great.  Did you test that backup?  Turns out many backups don't work.  Coveware reports an all-time low in ransomware payment rates.  And boy, they've got some great insight into what's going on with the way ransomware negotiators, well, I mean, they are a ransomware negotiator, and they've got some great feedback from their position as a ransomware negotiator on how the bad guys get in.  We're going to look at all of that.
+
+LEO:  Oh, interesting.
+
+STEVE:  We've got lots of listener thoughts and feedback about NIST password policy.  Oh, boy, I mean, that just really wound our...
+
+LEO:  Hot button, huh?
+
+STEVE:  We have people, whoa, we've got people defending changing your passwords every five minutes, so we'll cover that.  And also someone who was very happy with the fact that Azure or Entra or something allowed them to further lock down the ability of their listeners to sidestep those policies.  Lots of good stuff.  And finally, against all reason and begging credulity, it seems that we still haven't managed to put high-quality random number generators into our DNS resolvers.  It's like, what?  How?  What?  What?  You could even use that NSA sketchy PRNG and be in better shape than this.  And I'm going to make the point, make the case that there is so absolutely no excuse for anything on a network not to have, like, to have solved this problem long ago because packet timing is unpredictable and gives you a source that you can then use.
+
+LEO:  You've got a really random source, yeah.
+
+STEVE:  Yes.  If you're a little embedded thing on some blob with no access to the world, then you can see it would have a hard time coming up with entropy.  I mean, it's all deterministic.
+
+LEO:  Sure.
+
+STEVE:  But nothing on a network is deterministic.  And by definition, a DNS resolver is on a network.  So, yeah.  Anyway, we're going to go all through that, and I'll kind of try to calm down.  But...
+
+LEO:  We'll also find out, and I'm anxious to, why you need a random number generator, but you'll answer that question, I'm sure.
+
+STEVE:  Yes, we're going to go back and do a little bit of recap.  But more than anything, Leo, I've been told that punning is the lowest form of humor.  I don't really understand why.  But Great Britain's public voted for the name of their new train track leaf clearing train, and that's our Picture of the Week because no one is going to believe it.
+
+LEO:  Okay.  It's not Boaty McBoatface.  You know...
+
+STEVE:  No, but it is reminiscent of...
+
+LEO:  They should have learned from that.
+
+STEVE:  Actually there was a reference to Boaty McBoatface in the BBC's coverage of what Great Britain chose.
+
+LEO:  They've got to stop letting the public choose these names, I'm sorry.
+
+STEVE:  Maybe.
+
+LEO:  All right.  We'll find out in a moment.  It's our Picture of the Week.  All right.  Steve, if you could turn yourself down just a little bit, you're clipping a little tiny bit.
+
+STEVE:  I'm going to just step back a little, just calm - I'm going to calm myself down.
+
+LEO:  Maybe it's because you were a little...
+
+STEVE:  I'll back off on the coffee, yeah.
+
+LEO:  Okay.  You know, it's funny, I used to drink coffee before this show to get in sync with you; right?  But I can't sleep if I drink coffee this late in the day.  So now I'm just going to sit here and...
+
+STEVE:  Oh, that's true, it is afternoon, yeah.
+
+LEO:  Yeah.  I try to have one cup in the morning and stop there because otherwise...
+
+STEVE:  For what it's worth, espresso has much less caffeine...
+
+LEO:  I know.
+
+STEVE:  ...than actual drip coffee.
+
+LEO:  I drink espresso.
+
+STEVE:  Oh.
+
+LEO:  Which makes me vulnerable.  That's the problem.
+
+STEVE:  And your clocks set themselves.  You know, my [crosstalk]...
+
+LEO:  I'm very modest.
+
+STEVE:  I need to set my own clocks.
+
+LEO:  There's one device in the house, the microwave, that I still have to go set.  Even the stove is on WiFi.  The refrigerator is on WiFi.  Everything in here is either on WiFi or WWV or something.  It's getting its time.  Oh, and actually there's a little red clock across from me.  But like the Nixie clock even sets itself.  Everything sets itself except for my microwave and one red clock across from me.  So I have my chores set up for me on Sunday.  John used to do that; right, John?  You used to do that.
+
+STEVE:  Isn't the Nixie clock wrong?
+
+LEO:  No, it's UTC.
+
+STEVE:  Ah, of course.  So it's unusable.
+
+LEO:  It's 24-hour UTC.  So, yeah, you have to do math to understand what time it is.
+
+STEVE:  Although you do like to give our listeners the UTC time of the...
+
+LEO:  I do, because...
+
+STEVE:  So you can just turn around to find out how late we began.
+
+LEO:  Yeah.  We have people in every time zone.  Well, not every, but many different time zones.  And I can't give you all the time zones, so I give you UTC, and I let you do the math.  That's really my motto.
+
+STEVE:  That would be nice.
+
+LEO:  But you do the math.
+
+STEVE:  You do the math.
+
+LEO:  You do the math.
+
+STEVE:  That works for the podcast also.
+
+LEO:  All right.  I have cued up the official Picture of the Week.
+
+STEVE:  So once again, this was the name of the train, the official Network Rail train...
+
+LEO:  Yes.
+
+STEVE:  Which Great Britain's public voted for.  The train's job is to blow leaves off the track, which apparently is a big problem in the fall.  There's like a leaf problem.
+
+LEO:  [Laughing]  And they painted the name on the side of the train.
+
+STEVE:  That's right.  The train, the official name in Great Britain for the train track leaf clearing train is CTRL ALT DELEAF.
+
+LEO:  Oh, my god, that's brilliant.  You know what, that's so much better than Boaty McBoatface.  Brilliant.
+
+STEVE:  Isn't that?
+
+LEO:  Now I'm glad they voted on it.
+
+STEVE:  The public said this is what we want to see barreling down the tracks:  CTRL ALT DELEAF.
+
+LEO:  I love it.
+
+STEVE:  So I thought that was great.  And I thank you to one of our listeners for seeing it and thinking, okay, this is - Steve's got to see this for the podcast.  So thank you.
+
+Okay.  Under the topic of Haven't We Heard This Before? we have a story published in Futurism.com with the headline:  "Man Alarmed to Discover His Smart Vacuum Was Broadcasting a Secret Map of His House."
+
+LEO:  That's a great headline.
+
+STEVE:  [Crosstalk] "secret map" is, but okay.  So covering this hacker's blog posting, Futurism wrote:  "Forget your phone spying on you  maybe it's your vacuum you should really be worried about.  In a post on his blog Small World, the computer programmer and electronics enthusiast Harishankar Narayanan" - I think that's as good as I can get - "detailed a startling find" - he was startled, Leo - "he made about his $300 smart vacuum."  Not a cheap one.  "It was transmitting intimate data out of his home."  So imagine that.  Who would have, you know, we did talk about, like, the danger of robot vacuums and mapping back years ago.
+
+"Narayanan," they wrote, "had been letting his iLife A11 smart vacuum, which turns out to be a popular gadget that's gained mainstream media coverage," they wrote, "do its thing" - you know, vacuuming - "for about a year, before he became curious about its inner workings.  He wrote: 'I'm a bit paranoid  the good kind of paranoid.  So I decided to monitor its network traffic, as I would with any so-called smart device.'  They said:  'Within minutes, he discovered a steady stream of data being sent to servers halfway across the world.'"  Again, that's where they are, those servers.
+
+"He wrote:  'My robot vacuum was constantly communicating with its manufacturer, transmitting logs and telemetry that I had never consented to share.  That's when I made my first mistake:  I decided to stop it.'  The engineer says he stopped the device from broadcasting data, though kept the other network traffic, like firmware updates, running as usual.  The vacuum kept cleaning for a few days after that, until early one morning it refused to boot up.
+
+"He wrote:  'I sent it off for repair.  The service center assured me, "It works perfectly here, sir," he wrote.  'They sent it back; and, miraculously, it worked again for a few days.  Then it died again.'  Narayanan would repeat this process several times, until eventually the service center refused to do any more work on it, saying the device was no longer in warranty.  He said:  'Just like that, my $300 smart vacuum transformed into a mere paperweight.'  Okay, now, in all fairness, he was screwing around with its network traffic; right?  So okay.  I would argue that he got what he'd asked for, but the story continues.
+
+They said:  "More curious than ever, Narayanan now had no reason" - it being out of warranty - "not to tear the thing apart" - and apparently he was going to keep his floors cleaned some other means - "looking for answers, which is exactly what he did.  After reverse engineering the vacuum, a painstaking process which included reprinting the device's circuit boards" - wow, he had a lot of time on his hands - "and testing its sensors, he found something:  Android Debug Bridge, a program for installing and debugging apps on devices, was 'wide open' to the world."  Well, yeah.  You know, like a few connection points on a circuit board.  So the world can't get to it, but he could.
+
+"Narayanan said:  'In seconds, I had full root access.  No hacks, no exploits.  Just plug and play.'"  Meaning he didn't have to do anything except hook up some wires to it.  Fine.  "Through a process of trial and error, he was able to create an SSH connection from the vacuum to his computer.  That's when he discovered a 'bigger surprise.'  The device was running Google Cartographer, an open-source program designed to create a 3D map" - 3D?  I guess, well, it would seem that 2D would be enough, but okay - a 3D map of his home, data which the gadget was transmitting back to its parent company.
+
+"In addition, Narayanan says he uncovered a suspicious line of code broadcasted from the company to the vacuum, timestamped to the exact moment it had stopped working.  He wrote:  'Someone  or something  had remotely issued a kill command.'  He said:  'I reversed the script change and rebooted the device.'"
+
+LEO:  Oh, wow.
+
+STEVE:  "'It came back to life instantly.'"
+
+LEO:  Oh, my god.
+
+STEVE:  "'They hadn't merely incorporated a remote control feature.  They had used it to permanently disable my device.'"
+
+LEO:  It had a kill switch.
+
+STEVE:  It had a kill switch.  "In short, he said, the company that made the device had 'the power to remotely disable devices, and used it against me for blocking, in response to blocking their data collection.  Whether it was intentional punishment or automated enforcement of 'compliance,' the result was the same:  a consumer device had turned on its owner."
+
+"Narayanan warns that 'dozens of smart vacuums' are likely operating similar systems."  And actually, in his blog posting, which I did read fully, he talked about why there was a reason to believe that the guts had been spread among many other vacuum manufacturers, that it was basically white-labeled internally, and many people were using the same thing.  "He said:  'Our homes are filled with cameras, microphones, and mobile sensors connected to companies we barely know, all capable of being weaponized with a single line of code.'"
+
+LEO:  This is why people were upset about Amazon's bid to buy Roomba last year, was oh, well, Amazon will get all the mapping.  Because these devices do have to make a map of your home.  That's how they work.
+
+STEVE:  They do.  One could argue they need not be sending it back to, right, to the mothership.
+
+LEO:  Right, to the home office.
+
+STEVE:  So the article in Futurism.com says:  "At the end of the day, it's a stark reminder that for-profit tech often comes at a hidden cost, and one that doesn't end after you pay at the register."
+
+Okay, now, this article and Narayanan's original blog posting, as I said, both of which I read, strike me as being somewhat sensationalized.  Like it was a huge surprise that this...
+
+LEO:  No.
+
+STEVE:  Like that this very capable $300 robot vacuum which he did not design and program might be doing things that he didn't expect.  But the essence of the reality of today's IoT devices is that electronics and memory have become so inexpensive, and at the same time powerful, that a tremendous amount of processing and communications capability is sitting inside even our smallest connected devices.  The little vacuum was running Linux and Google Cartography systems.  So, I mean, yikes.  You know, written in Go, probably.  And he was able to log on to his vacuum and see the various scripts and running - it had a file system in there.
+
+LEO:  Well, it's an Android device; right?  That's the whole point.
+
+STEVE:  Yes, yes.
+
+LEO:  And like an Android phone, it's got adb, you use adb, and you get into it, and you can root it.
+
+STEVE:  Right.  So, no...
+
+LEO:  But the other point is that iLife is a Chinese company.
+
+STEVE:  Yes.
+
+LEO:  So remember when you bought that Chinese switch, the on/off switch?
+
+STEVE:  Yeah.
+
+LEO:  You had the same concern.
+
+STEVE  Yeah.  So, right.  Narayanan's blog expresses surprise at finding his network's unencrypted WiFi access credentials sitting in the device's file system.  How did he expect it to be on his network if it wasn't able to use his WiFi access credential to log itself on?  And his blog claimed with some indignation that those credentials were being sent back to the device's manufacturer.  He wrote:  "At this point I had enabled SSH port access, allowing me to connect to the system from a computer.  Then I reassembled the entire device."  Because he had taken the whole thing apart.  "After experimenting with Linux access for a while, I found logs, configurations, and even the unencrypted WiFi credentials that the device had sent to the manufacturer's servers."
+
+Okay.  So none of this should come as any surprise to our listeners.  But the reason I wanted to take some time to share it, is that it's one thing to assume that something could happen, but it's something more to examine and confront a real-world instance where it actually is happening.  In other words, this is happening.  And essentially, any device that's connected to a network that requires authentication credentials, and they all do in order to hook to your WiFi, no matter how small and innocuous that device may appear to be, will have those credentials which it could very well be leaking back to the device's home servers.
+
+There is no reason it ever should.  Doesn't need to in order to function.  But nothing prevents it.  And it's easily to imagine some coder geek somewhere thinking that it would be cool to collect and archive every one of their customers' home router logon credentials for no other reason than it's possible, and storage is cheap.
+
+LEO:  Well, and there are reasons because Amazon does this.  When you set up an Amazon device, it says, you know, I could just remember your credentials, and then when you set up another Amazon device, it'll just join the network.
+
+STEVE:  How comforting.  That's right.
+
+LEO:  Yes.  And if you had a bunch of iLife devices, you might say, oh, yeah, look, I just hook them all up automatically.
+
+STEVE:  Yeah, magic.  It's not like they're talking to each other.  They're talking back to the mothership.
+
+LEO:  The home office, yeah.
+
+STEVE:  That's right.
+
+LEO:  In Shenzhen, China.
+
+STEVE:  That's right.  It's also important to appreciate that any connected device will be providing the entities that designed the device with full access - behind the network's router - to the internal residential network to which the device is authenticated.  In his blog, Narayanan also noted:  "The device came with rtty software installed by default.  This small piece of software allows remote root access to the device, enabling the manufacturer to run any command or install any script remotely without the customer's knowledge."
+
+Of course.  Again, it's a rolling Linux platform that you've given access to your network to, and it's phoning home.  So anyone using one of these will implicitly have invited a powerful, network-aware, Linux-powered consumer computing device into their home and given it full access to their home's internal network.
+
+We all know the story of the Trojan horse.  One of the many reasons I pray that hostilities with our friends in the East never escalate is that there must be people inside the government of the PRC that understand quite well that they already have persistent access into the internal residential networks of all of the more upscale homes in the West.  I'm certain that none of these devices were designed to be Trojan horses, but any of them with sufficient flexibility can fill that bill.
+
+The emergence of isolated "guest" WiFi accounts capabilities in consumer routers has been a very good thing.  But it's still necessary to be certain to enable that guest WiFi account network isolation, not to just have an additional SSID and password for your guests.  Isolation is typically not the default because the barriers it deliberately erects between your main network and the guest network can result in some additional overhead when devices on the primary network need to contact devices on the private, or the guest, network.  I'm sure that virtually no regular consumers appreciate what it means to have invited IoT gadgets into their homes.  It's almost certain that nothing would ever come - probably this will all amount to nothing.  Let's hope nothing will ever come of having done so.
+
+But at the very least it's something that all security-aware users, like everyone listening to this podcast, should just, you know, take up some residence in the back of their mind, that all of these IoT things, Leo, as you said, they phone home to Shanghai or Shenzhen or who knows where, and they've got connections.  And there's no justifiable reason for this vacuum rolling around the floor to be streaming data back to central headquarters.  I mean, the problem is, storage is cheap for them there.  Bandwidth is cheap for us everywhere now.  Nothing prevents it from happening.  And it is happening.
+
+LEO:  Yeah.  You should assume it is.
+
+STEVE:  Yeah.  I mean, it is.  And one of the things I've often wanted to do, but I've never had the time, maybe once I get all of the other software that I really want to get done as my primary finished, is it is quite frightening to look at one's actual bandwidth at the router.  I'm sitting at my computer doing nothing, and suddenly a huge amount of data leaves my network.  Why?  Nothing I did.  But I can see it happening.  It would be really cool to be able to disambiguate all of that traffic and create a user interface that shows users who care, who's talking to whom?  What is all this going on?  Because our networks are very, very busy, and we have no visibility into that.
+
+LEO:  Well, I mean, used to be able to do that with Wireshark; right?  I mean, you could run something like Wireshark.
+
+STEVE:  Yeah, but all you get is a raw packet dump.  I mean, it's not doing any great, you know, I'd like to be able to say, oh, that's Apple.com.  Don't worry.  That's just your i-things, you know, doing some work.  But, you know, if it's heading off to - if there's, like, large bandwidth, some stuff going off to China, it'd be nice to know which of your devices, you know, is doing that talking.
+
+LEO:  I bet you could record with Wireshark and then send it to an AI, have it kind of translate it or analyze it.  I bet you you could do that.
+
+STEVE:  Yeah.  Lot of steps.  I'd just like to have...
+
+LEO:  Good job for Zapier.
+
+STEVE:  I would like to have a nice little UI.  Or maybe upload it to GRC, and a page at GRC will show you.
+
+LEO:  Okay.  Steve.  Who's in charge there?
+
+STEVE:  Somebody who's very busy, it turns out.
+
+LEO:  Oh, yeah.
+
+STEVE:  Somebody who's scrambling to - yeah.  I expected I would have the Benchmark finished before Andy had his website published.  But right now it's kind of neck and neck.  I'm not sure.
+
+LEO:  It is, it's a race. 
+
+STEVE:  Okay.  So I was looking at a bit of news about some new Russian legislation that was interesting, but not particularly compelling.  And I thought, okay, I'm not going to put this in the podcast.  Until the article tied back to the apparent results from the similar legislation that China had put in place four years ago.  We talked about it at the time.  It's going to be familiar to our listeners.  But this suggests that all of this is important.  So here's what happened.
+
+"Russian lawmakers" - I'm reading from the piece of news that I  found - "are working on a new bill that would require security researchers, security firms, and other white-hat hackers to report all vulnerabilities they find to the state, in a law that's similar in spirit to a law already in effect in China since 2021."  Remember we talked about this in China where you actually, like, organizations were ranked and, like, got a higher reputation level if they submitted more vulnerabilities to the state.  And there was even like a minimal, a minimum required reporting level in order to, like, stay on the good guys list.  I mean, they really made it like a saving face sort of thing for the Chinese culture there.
+
+Anyway, the article said - we will circle back to that in a second.  The article says:  "The bill is currently being" - the Russian bill - "is currently being discussed among lawmakers, and no official draft is available yet.  It is part of Russia's efforts to regulate its white-hat ecosystem, a process officials began working toward three years ago, in 2022.  All previous efforts have failed, with the most recent one being knocked down in the Duma in July on the grounds that it did not take into account the special circumstances and needs of reporting bugs in government and critical infrastructure networks.  Now, according to sources who spoke to Russian business magazine RBC, a new draft of the bill is being prepared.
+
+"The biggest change in this upcoming version is the addition of a requirement to not only report all vulnerabilities to the vendor or network owner, but also to Russian authorities.  Three state agencies will be in control of this new unified system that takes in vulnerability reports and will be making new rules or requirements for researchers going forward.  They include the country's main internal intelligence service, the well-known FSB; the National Coordination Center for Computer Incidents, which is sort of a CERT-like organization created and operated under the FSB since 2018; and the FSTEC, which is Russia's cryptography, export control, and dual-use technology agency, under the country's military."
+
+So under this proposed new forthcoming legislation:  "Security researchers who fail to report bugs to this state-unified system will face criminal charges for 'unlawful transfer of vulnerabilities.'"  In other words, a new thing is going to get created, like where you have to transfer vulnerabilities by law to the state.  And if you don't, then you face criminal charges under unlawful transfer.  The bill will also introduce a new concept of "registries" for companies that run bug bounty programs and for registries for researchers themselves.  You have to register to be a researcher, where white-hats will have to provide their real names to the state.  No more of these hacker monikers.  "This last part has been a contention in previous versions of the bill, with the private sector and security researchers pushing back hard against it, for some legitimate reasons.
+
+"As the RBC piece" - which is that Russian business magazine - "points out, researchers are uncomfortable with providing the government with their real names.  They argue that a leak or a hack of this system would pose serious threats to their safety, being at risk of being kidnapped by criminal groups and forced to produce vulnerabilities under the threat of violence."  Yikes.  "They also fear their data falling into the hands of foreign governments, which may sanction their accounts or arrest them on trips abroad for conferences or vacations."  And yes, all of that's been seen.  So yeah.  So the guys who are finding the vulnerabilities want to remain anonymous, and they're making a strong case for that because they're seen as elite hackers whose work product has real value, not only to the Russian government, but to the criminal side.
+
+"The bill is intended to cover all facets of the white-hat ecosystem, from commercial bug bounty programs to internal vulnerability rewards programs (bug bounties) at private corporations, and from individual researchers doing hobby work to pen-testing assignments."  So basically, anybody who is in a position to ever find a bug in any software who's inside of Russia.  "All bugs, no matter where and how they were found, must be reported, and researchers will receive legal liability protection if they follow the rules."  So they cannot be sued by a commercial company for reporting a bug in that commercial software, so that's important, legal liability protection so long as they abide by these rules.
+
+"The liability protection, however, was not enough to get the Russian infosec community on the government's side last time, and may still not be enough to convince them this time around that it's in their best interests to reveal their real names and give the government a copy of all their research for free," which is what this also amounts to.
+
+So Russia is working toward legislation which would require all security researchers to register with the Russian government, giving them their real name and identity information, and mandatory reporting of anything they might discover in software that doesn't work as it should.  Now, here's the part, while not surprising, is most worrisome.  And believe it or not, we didn't even get there yet.
+
+"In July of 2021," as we talked about at the time, "the Chinese government passed a similar law that required all Chinese researchers and security firms to report bugs to the government no more than 48 hours after its discovery.  People were worried that the Chinese government would abuse the intent behind these reports of unpatched bugs, unpatched and unknown bugs, to benefit its own offensive operations, and time has proven that to be happening.  The use of zero-days by Chinese APTs - advanced persistent threat groups - has increased dramatically since the Chinese law went into effect" four years ago.
+
+"A draft for Russia's new white-hat research law is expected to reach the Duma by the end of the year, although it's unclear if it will pass since this whole thing has had three years' worth of controversy attached to it already, with the Russian infosec community making a good argument against it, or at least the public registry part of it."
+
+Okay.  So this update caused me to go digging a bit further, and I found a piece of think tank research about the status of this Chinese program.  The think tank wrote:  "The Cyberspace Administration of China (CAC), the Ministry of Public Security (MPS), and the Ministry of Industry and Information Technology (MIIT) published the 'Regulations on the Management of Network Product Security Vulnerabilities' (RMSV) in July of 2021.  So four years ago.  Even before the regulations were implemented in September of that year, analysts had issued warnings about the new regulation's potential impact.
+
+"At issue is the regulations' requirement that software vulnerabilities, flaws in code that attackers can exploit, that they would be reported to the MIIT within 48 hours of their discovery by industry.  The rules prohibit researchers from publishing information about vulnerabilities before a patch is available, unless they coordinate with the product owner and the MIIT; publishing proof-of-concept code used to show how to exploit a vulnerability; and they're not allowed to exaggerate the severity of the vulnerability.  In effect, the regulations," the think tank wrote, "push all software vulnerability reports to the MIIT before a patch is available."
+
+LEO:  Oh, that's the key.  Before the patch is available.
+
+STEVE:  Yes.  Yes.  Conversely, the system currently in place in the U.S. relies on voluntary reporting to companies, with vulnerabilities sourced from researchers chasing money and prestige, or from cybersecurity companies that observe exploitation in the wild.
+
+They wrote:  "Software vulnerabilities are not some mundane part of the tech ecosystem.  Hackers often rely on these flaws to compromise their targets.  For an organization tasked with offensive operations, such as a military or intelligence service, it is better to have more vulnerabilities."  Uh-huh.  "Critics consider this akin to stockpiling an arsenal.  When an attacker identifies a target, they can consult a repository of vulnerabilities that enable their operation.  Collecting more vulnerabilities can increase operational tempo, success, and scope.  Operators with a deep bench of tools work more efficiently, but companies patch and update their software regularly, causing old vulnerabilities to expire.  In a changing operational environment, a pipeline of fresh vulnerabilities is particularly valuable," they wrote.
+
+Again, I'm going to wrap this up by jumping way down to some of this very long and detailed report's conclusions.  Here are the four paragraphs that really make the case.  The report finishes, writing:  "Three earlier reports contour China's software vulnerability ecosystem.  Combined, they demonstrate a decrease in software vulnerabilities being reported to foreign firms and the potential for these vulnerabilities to feed into offensive operations."  So here they are, three.
+
+"First, the Atlantic Council's Dragon Tails report demonstrates that China's software vulnerability research industry is a significant source of global vulnerability disclosures, and that U.S. legislation prior to China's disclosure requirements significantly decreased the reporting of vulnerabilities from specific foreign firms adding to the U.S. entities list, removing an important source of security research from the ecosystem.
+
+"Second, Microsoft's 'Digital Defense Report 2022,'" so that was only one year after the new legislation went into effect in China, "showed a corresponding uptick in the number of zero-days deployed by PRC-based hacking groups.  Microsoft explicitly attributes the increase as a 'likely' result of the RMSV," which is this new reporting requirement.  "Although less than a year's worth of data do not make a trend, both reports gesture at the impact of the regulation in expected ways, based on China's past behavior of weaponizing the software vulnerability disclosure pipeline."
+
+And finally:  "Third, Recorded Future published a series of reports in 2017 with evidence indicating that critical vulnerabilities reported to China's National Information Security Vulnerability Database" - that's that CNNVD, which is run by the MSS - "were being withheld from publication for use in offensive operations."  So way before this became a law, it was already happening.  Now with it being a law it is happening more.
+
+So this all leaves very little doubt that China, as a sober and aggressive cyber-war participant, is doing everything it can to marshal and weaponize the vulnerabilities that are continually being discovered in deployed software.  And now it appears that Russia will soon be formalizing a similar strategy, if they can get a buy-in from the existing infosec ecosystem.  Maybe they'll have to, you know, soften the registration requirements a bit.  But clearly they want to be at parity with the strategy that China has taken, which is benefiting China at everybody else's expense.  And it turns out, Leo, software is not perfect.
+
+LEO:  Ever.  
+
+STEVE:  Who would have thought?
+
+LEO:  Who woulda thunk it?
+
+STEVE:  You know one thing that is perfect, though?
+
+LEO:  Our advertisers?
+
+STEVE:  I knew you were going to guess correctly.
+
+LEO:  On we go.  Let's talk about Scattered Spiders.  But don't be scared.  There are no insects involved here.  Just some evil people.
+
+STEVE:  Well, it's sad.  Three days ago...
+
+LEO:  Yeah, we were all hackers as teenagers; right?  I know you were.
+
+STEVE:  I've said many times, if I were in high school today, well, I mean, I have a strong sense of ethics.  So...
+
+LEO:  Yeah, you wouldn't be ransomwaring companies or anything like that.
+
+STEVE:  No.  I had a, as I mentioned once before, maybe at least once, I had a master key to the district, the entire school district.
+
+LEO:  Oh, geez.
+
+STEVE:  Opened any door in the high school and any high school.
+
+LEO:  Oh, my god.  But you didn't use it for evil.
+
+STEVE:  No.  And the principal who had me in his office finally said, you know, you kids - because there was a small group of us - would be in real trouble except we know when the janitor lost his master key ring, so we know how long you've had these keys.  No one has reported any theft or problem.
+
+LEO:  Right, right.
+
+STEVE:  At all.  And we said, yeah, you know, we just thought it was cool to have, you know.
+
+LEO:  If it had been my principal, he would have said, see, I've always said you were an underachiever, Laporte.  No ambition at all.  Never used that key once.
+
+STEVE:  So, okay.  Three days ago, the BBC carried some news about the arrest of a pair of teens who were members of the Scattered Spider hacking collective which, you know, we've been talking about so much recently since it's not worth losing sight of the fact, or I should say it's worth not losing sight of the fact that hackers are being caught and held responsible.
+
+LEO:  Yes, good, yes.
+
+STEVE:  You know, I don't say that often enough.  I see the stories go by.  These are those people, you know, they got nabbed and everything.  But it doesn't often make the podcast.  So I thought, let's just pause here for a second to make sure people understand that these kids, hackers, are not getting away with this, like, forever.  Although it is weird what time delay there is.  I'll explain this.
+
+So the BBC reported on this incident three days ago.  They wrote:  "Two teenagers have appeared in court facing computer hacking charges, in connection with last year's" - last year's -  "cyberattack on Transport for London (TfL).  The 18 and 19 year olds were charged with conspiring to commit unauthorized acts under the Computer Misuse Act."  Rather broad.  "They appeared at a hearing at Southwark Crown Court on Friday, and spoke only to confirm their names.  Judge Tony Baumgartner scheduled a further hearing for the 21st of November, with a trial date set for June 8th of 2026.
+
+"The cyberattack caused three months of disruption to Transport for London last year, and affected live Tube information, online journey history, and payments on the Oyster app."  Don't know what any of that is, but I guess if you're in London you do.  "The teenagers were recently arrested by the National Crime Agency" - so recently arrested, meaning a lot of time went by during which they thought they'd gotten away with this - "recently arrested by the National Crime Agency and City of London Police on the 16th of September" - so, you know, a few weeks ago - "and were charged two days later.
+
+"The NCA said it believed that the hack, which began on August 31st last year, was carried out by members of cybercriminal group Scattered Spider.  TfL said the hack cost it 39 million pounds in damage and disruption.  Following the hack, TfL wrote to around 5,000 customers to say there may have been unauthorized access to their personal information such as bank account numbers, emails, and home addresses."
+
+So again, 18 and 19 years old.  And now they'll have an adult computer criminal crime record for the rest of their lives.  They presumably have some software skills and enjoy computing technology.  But in an environment where software skills are not scarce, who in their right mind would hire either of them to do anything that was computer related?  You know, flip burgers, fine.  But stay away from our point of sale terminals because you guys are computer criminals.  And they always will be.  So, boy, you know, sad that they've messed up by doing that.
+
+Last Thursday, the day before, the European Union found that Facebook, Instagram, and TikTok apps were and are in violation of terms of the EU's DSA, which is the Digital Services Act.  The act has some teeth in it for this breach, since Meta and TikTok could be fined an attention-grabbing 6%, up to 6% of their total global revenue, which is some cash.  That'll get their attention.  The EU's press release explained what's going on.
+
+They wrote:  "Today, the European Commission preliminarily found both TikTok and Meta in breach of their obligation to grant researchers adequate access to public data under the Digital Services Act (DSA).  The Commission also preliminarily found Meta, for both Instagram and Facebook, in breach of its obligations to provide users, their users, simple mechanisms to notify of illegal content, as well as to allow them to effectively challenge content moderation decisions."  Right?  There should be an easy way to do that as a user of the platform, both to notify Meta and to challenge a decision that Meta has made.
+
+"The Commission's preliminary findings show that Facebook, Instagram, and TikTok may have put in place burdensome procedures and tools for researchers to request access to public data."  Right.  We wouldn't want that because researchers might, you know, get up to some research.  "This often leaves the researchers with partial or unreliable data, impacting their ability to conduct research, such as whether users, including minors, are exposed to illegal or harmful content.  Allowing researchers access to platforms' data is an essential transparency obligation under the DSA, as it provides public scrutiny into the potential impact of platforms on our physical and mental health.
+
+"When it comes to Meta, neither Facebook nor Instagram appear to provide" - this is still the European Commission speaking - "neither Facebook nor Instagram" - this is the European Commission's opinion on this after lots of research into this - "appear to provide a user-friendly and easily accessible 'Notice and Action' mechanism for users to flag illegal content, such as child sexual abuse material and terrorism content.  The mechanisms that Meta currently applies seem to impose several unnecessary steps and additional demands on users.  In addition, both Facebook and Instagram appear to use so-called 'dark patterns,' or deceptive interface designs, when it comes to the 'Notice and Action' mechanisms."  And of course anybody who was trying to resist the upgrade from Windows 7 to Windows 10 a few years ago knows all about "dark patterns."  Would you like to update now, or later, as opposed to never.
+
+"Such practices," they wrote, "can be confusing and dissuading.  Meta's mechanisms to flag and remove illegal content may therefore be ineffective.  Under the DSA, 'Notice and Action' mechanisms are key to allowing EU users and trusted flaggers to inform online platforms that certain content does not comply with EU or national laws.  Online platforms do not benefit from the DSA's liability exemption in cases where they have not acted expeditiously after being made aware of the presence of illegal content on their services."
+
+Okay.  So on one hand you can kind of see where the platform would like to put up some resistance, a little bit of back pressure, like, you know, the same way insurance companies do of denying your first claim, and then you've got to fight them a little bit, and then they go okay, fine, well, yeah, we'll honor that.  Because, you know, that reduces the influx and the flood.  At the same time, if they don't, if they can be shown not to be responding in a timely fashion, that opens them to action under the DSA, and they lose their liability protection.  So they're walking a thin line here.
+
+The EU wrote:  "The DSA also gives users in the EU the right to challenge content moderation decisions when platforms remove their content or suspend their accounts.  At this stage, the decision appeal mechanisms of both Facebook and Instagram do not appear to allow users to provide explanations or supporting evidence to substantiate their appeals.  This makes it difficult for users in the EU to further explain why they disagree with Meta's content decision" - you know, arguing for its restoration - "limiting the effectiveness of the appeals mechanism."  Essentially, Facebook and Instagram don't want to spin up a big mechanism for doing what the DSA requires them to do.  It's not going to be easy to do this.  They'd rather just kind of push back a lot.
+
+The Commission writes:  "The Commission's views related to Meta's reporting tool, dark patterns, and complaint mechanism are based on an in-depth investigation.  These are preliminary findings which do not prejudge the outcome of the investigation.  Facebook, Instagram, and TikTok now have the possibility to examine the documents in the Commission's investigation files and reply in writing to the Commission's preliminary findings.  The platforms can take measures to remedy the breaches.  In parallel, the European Board for Digital Services will be consulted.  If the Commission's views are ultimately confirmed, the Commission may issue a non-compliance decision, which can trigger a fine of up to 6% of the total worldwide annual revenue of the provider.  The Commission can also impose periodic penalty payments to compel a platform to comply.
+
+"New possibilities for researchers will open up on October 29th [tomorrow], 2025, as the delegated action on data access comes into force."  That's the next part of the DSA.  "This act will grant access to non-public data from very large online platforms and search engines, aiming to enhance their accountability and identify potential risks arising from their activities."
+
+Okay.  So my takeaway from this is that, details aside, what all of this amounts to is more evidence of a significant changing tide for the entire online tech industry.  The next 10 years are not going to look like the last 10 years.  Up to this point the online world has been an "anything goes free for all."  This state of affairs has existed since the world began to discover an alternative to using their telephone modems to dial into AOL.  It's called the Internet.
+
+In retrospect, it has taken a surprisingly long time - right?  I mean, we've had decades of this - for the political class to recognize that it's able to create and then enforce regulations on the behavior of these global online behemoths.  And it's probably the fault of the tech companies who have for so long thumbed their noses at polite governmental requests for online app behavioral changes.  We've been covering that throughout the life of this podcast.  The legislatures finally grew tired of asking for voluntary change, and decided to enact some laws with teeth.
+
+I expect we're going to be seeing the "government compliance" departments of these large companies becoming much larger, and there's going to be a need for a culture change, a change in thinking about what we get to do, we tech companies online.  Somewhere along the road to success and world domination, when any app's reach becomes sufficiently influential, that service begins to more closely resemble a public utility, and its influential behavior is going to be regulated.
+
+Now, every week we cover various aspects of this struggle because they are in the news, they are what's happening, and they are determining the shape of our future.  Until now, big tech has had total freedom to do as it pleases in a lawless and unregulated playground.  I think it should be clear to everyone by now that this status quo is changing.  Leo?
+
+LEO:  Yeah, I agree.  It's interesting.  The only issue is whether the government is acting - who the government is acting on behalf of.  So if they're acting on behalf of us, to protect us, great.  I'm all for it.  If they're acting, as I think often the EU is, on behalf of European companies, you know, a lot of people think that the EU's...
+
+STEVE:  Protectionism?  Right.
+
+LEO:  Yeah, that the EU's attack on Apple is at the behest of Spotify, well, it is, because Spotify complained.  And, you know, and of course if they're acting against these companies for political reasons, that's a third reason that maybe isn't so good, either.  So as long as they're acting on our behalf, that's fine.
+
+STEVE:  Another example is what we saw, and we covered this, when Google was trying to get Europe to agree to its anti-tracking technology, which was really good, it was European advertisers who said we don't like this.
+
+LEO:  Exactly.  That's come up again, by the way.  The EU is now complaining about Apple's ad track, what do they call it, app tracking, you know, that switch that pops up where you say do you want to allow this app to track you across the...
+
+STEVE:  Right.
+
+LEO:  And the EU is complaining about - Apple's actually thinking of disabling it for EU customers.  But it's a good thing for customers; right?
+
+STEVE:  Yes.  It notifies you.  Yes.
+
+LEO:  Yeah.  So that's an example I'm sure that that's advertisers have complained.  And so it's protectionist.
+
+STEVE:  Because, yes, people are saying no, I don't want to be tracked.  I didn't realize I was; but now that you ask me, thank you, no, I don't want to be tracked.
+
+LEO:  No, like 90% of people who see that say no, don't track me.
+
+STEVE:  So I understand exactly what you mean, Leo, about who is to benefit.  But it doesn't...
+
+LEO:  Cui bono, as they say.
+
+STEVE:  It also doesn't matter.  Right?
+
+LEO:  Right.
+
+STEVE:  I mean, if it's EU law, and our big tech has to operate within the laws of the prevailing jurisdiction, then this is going to happen.  And again, I think that, you know, we've had this, like, Wild West attitude where, you know, where really disruptive technologies have just come barreling in, and no one's said anything.  It's interesting that, like, suddenly, I don't know what it is in the air, but this year, in 2025, it's like, okay, the governments everywhere are saying, we've had enough of this.  We're going to put some laws down here.  And, I mean, and it's - no one's saying it's not creating a mess.  We keep talking about it, like the age verification disaster.  You know, it's a mess.  But they finally said, okay, you know, we're going to have age verification.  You geeks figure out how to do that.
+
+LEO:  Yup. 
+
+STEVE:  Not our problem.  Speaking of geeks, if all of that wasn't enough to put a chill in your step, how about the news that, starting this December, a month and a half, Microsoft Teams will be adding WiFi tracking that can be forced upon its users, that is, the users of Teams' clients.  I first saw a little blurb about this, which read:  "Microsoft Teams to get WiFi tracking feature."  It said:  "A new Microsoft Teams feature will let organizations track employees based on nearby WiFi networks.  The feature is designed to let employers know what building an employee is working from based on nearby networks.  According to privacy experts, the new feature will allow companies to crack down on workers who dodge their return-to-office mandates.  The new WiFi tracking is expected to roll out in December for the Teams Mac and Windows desktop clients."
+
+So that's all the little blurb said.  That made me curious so I tracked down Microsoft 365 Roadmaps notice.  Microsoft's title for this is "Microsoft Teams:  Automatically update your work location via your organization's WiFi."  Well, that sounds nice; right?  Innocuous enough.  Who wouldn't want to have that turned on?  Microsoft's short summary of that reads:  "When users connect to their organization's WiFi, Teams will soon be able to automatically update their work location to reflect the building they're working from.  This feature will be off by default.  Tenant admins will decide whether to enable it and require end-users to opt-in."  In other words, by policy, it can be forced on.
+
+So it's not clear from that, from that wording, what happens if you were to connect from your local Starbucks WiFi.  But it at least suggests that "Corporate" would know you were not on campus.  I imagine we'll hear from some of our Teams-using listeners once this starts rolling out at the end of the year.  I'll be interested to find out, you know, like what sort of granularity that this provides.  If you're logging in from Starbucks, does it just say "off campus" or "we don't know"?  Or maybe it'll say, "Oh, you're at Starbucks."
+
+One bit of news stood out for me amid a long article about the current global ransomware threat landscape.  The quote from the deeply researched article, and we're going to talk about that a little bit more in a minute, read:  "95% of survey respondents are confident in their ability to recover from a ransomware attack."  Okay; right?  95%.
+
+LEO:  95%.  Almost everybody, yeah.
+
+STEVE:  We're good.  We're good.  Bring it on, baby.  We can recover.
+
+LEO:  We're ready.
+
+STEVE:  Turns out only 15% of those confident 95 were actually able to recover their data.
+
+LEO:  Who were actually attacked.  Yeah.  So only - okay.  This explains a lot, Steve, because I keep wondering why are people suffering, you know, why did Jaguar, why were they down for a month from a ransomware attack?
+
+STEVE:  What the hell?  Yes.  And all their suppliers went bankrupt, and yeah.  And the UK's economy, like...
+
+LEO:  Two billion dollars.  So that's because, now I understand, the executives, the IT guys, the security guys at Jaguar were confident, confident we were not going to have a - we can recover from anything.  And they couldn't.
+
+STEVE:  They pushed the backup button, and it went bleah.
+
+LEO:  Bleah.  Well, we have a sponsor for that, but we'll save that for a little later.
+
+STEVE:  Well, Coveware is the leading ransomware negotiation company.  So these guys are right in the thick of things.  A bit of surprising and welcome news which drew me to their end-of-third-quarter 2025 report, which they published last Friday, was that, for the first time ever, ransomware payment rates had seen a drop below 25%.  Below 25%.  They are down to 23%.  Meaning fewer than one in four are now paying ransom.
+
+LEO:  That's good.
+
+STEVE:  I put the chart for this in the show notes at the top of page 10 here because it's a beautiful-looking chart.
+
+LEO:  It's dropping.  That's interesting.
+
+STEVE:  Yes.  Yes.  It shows the percentage of ransoms paid across the past six years, from the start of 2019 through this just-ended third quarter of 2025.  Ransom payout rates started at 85% when this chart, when Coveware began charting this six years ago.  85% of ransoms were being paid.  So they were nearly a sure thing.  As the chart shows, the probability of a ransom being paid has been dropping more or less steadily ever since.  Until today, the chance of being paid a ransom has fallen to less than one in four, as I said.
+
+You know, we're always looking at companies being attacked and commenting that enough is not being done.  But this chart suggests that, in fact, a great deal has changed over the past six years.  Partly this might be more companies just saying no and refusing.  So that's part of the non-payment reason.  But it also likely means that more companies are able to say no and refuse to pay because their IT departments have assured them that they'll be able to recover without paying for the criminal's help.  And hopefully those are not part of those 85% that turn out not to be able to restore from backup because only 15% apparently can.
+
+But as I said, that interesting tidbit was what first drew me to this report.  Coveware's perspective on attacks is very interesting, illuminating, and insightful.  And they're the people who know because they're involved, they're like the tip of the spear in negotiating.  And Leo, after our next break, since we're here at just after an hour in...
+
+LEO:  Oh, such a tease.
+
+STEVE:  ...we're going to look at a very interesting report from Coveware.
+
+LEO:  Okay.  I do think, though, that Coveware might have a little bit of a vested interest in this statistic.  Like, see, we can help you not pay the ransomware because we'll negotiate with the bad guys; right?
+
+STEVE:  Could be.  Although what I'm focusing on is the information they have about attacks, which is really interesting.
+
+LEO:  Oh, good.  That would be of great value, yeah.
+
+STEVE:  Like how the bad guys get in.
+
+LEO:  Is it only their customers, I wonder?  Must be.  Because how else would they know; right?  Yeah.  All right.  We'll talk about how bad guys get in.  You know, people are banging at the door to sponsor this show because they know that if you're listening, you're scared.  If your job is to protect your company, all this show does is make you think, oh, god.  Oh, no.  I'd better do something about this.  Right?  Actually, if you think about it, Steve, when we started, you downloaded an app, you put it on your hard drive, you ran it locally, you ran it on-prem.  Nowadays almost everything is run in the cloud.  Right?  It's a SaaS app.  And so that's a whole different process of protecting.  You need something a little bit more sophisticated.  Anyway.
+
+STEVE:  Yeah, I mean, authentication has become everything.
+
+LEO:  Yeah, job one.  Let's talk about how hackers get into your system.  I'm fascinated.
+
+STEVE:  Okay.  So I'm going to share two pieces of a very long report, and I've got the link to the entire report in the show notes only because it is so full of really juicy tidbits.  So here's how the report begins.  They wrote:  "As we enter the final quarter of 2025, the cyber extortion landscape has split along two clear paths:  volume-driven Ransomware-as-a-Service campaigns targeting the mid-market, and high-cost, targeted intrusions aimed at larger enterprises."  Okay.  So that's part of, I mean, this report has so much really interesting stuff in it.
+
+"In the volume category, mid-market companies remain the most impacted by traditional Ransomware-as-a-Service (RaaS) groups.  The Akira RaaS group leveraged a vulnerability that resulted in record-breaking attack volumes between July and August.  This quantity-over-quality approach is low-cost for the attackers, generally results in lower demands, but achieves a ransom payment rate that is higher than average.  Akira maintains substantial RaaS infrastructure supporting a broad spectrum of attacks against enterprises.  This is in line with their long-standing methodology that seeks to maximize the total number of attacks regardless of victim size and profile.  This model gives Akira a sustained market share advantage over groups that prioritize selective, high-profile targets.
+
+"Other actors get caught up with 'shiny object syndrome'  an attempt to tailor attacks only to enterprises above a certain size or perceived financial capacity.  That latter strategy is substantially more expensive for attackers, resulting in lower-than-average ransom payment rates despite higher ransom demands.
+
+"While mid-market companies have historically been the most impacted cohort of victims, larger enterprises periodically drift into focus when extortion campaigns materialize that leverage to exploit widely used software or hardware.  Examples of this are CL0P's campaigns against various file-transfer appliances, and Scattered Spider's campaigns that exfiltrate data from common SaaS applications.  In Q3, we see ransomware groups that have previously limited their efforts to smaller companies expanding into enterprise environments with targeted, higher-cost methods."  So as I said, this report is just so full of fascinating insights.
+
+Much later they address the "Initial Access Vectors" question about what they have discovered about the way attackers get in.  They write:  "Initial access activity in Q3 reflected the continued evolution of attacker behavior more than any dramatic shift in tactics.  The same foundational pillars  remote access compromise, phishing/social engineering, and software vulnerability exploitation" - those are the three; right?  Remote access, phishing/social engineering, software vulnerabilities  "remain at the core of intrusion activity, but the distinctions between them are increasingly blurred.  The modern intrusion no longer begins with a simple phishing email or an unpatched VPN.  It starts with a convergence of identity, trust, and access across both people and platforms.
+
+"Remote access compromise remained the dominant vector, accounting for more than half of all observed incidents.  Credential-based intrusions through VPNs, cloud gateways, and SaaS integrations" - that of course was the whole Salesforce mess - "continued to drive compromise, particularly in organizations navigating infrastructure migrations or complex authentication models."  Right?  You just get tripped up over, you know, this whole system of gluing external services together and then having to pass credentials and authentications back and forth across networks.  Mistakes happen.  They wrote:  "Even where technical patching was current, attackers found success exploiting lingering configuration debt such as old local accounts, unrotated credentials, or insufficiently monitored OAuth tokens."  Exactly what we were just talking about.
+
+"Q3 also underscored how remote access and social engineering have effectively merged.  Adversaries increasingly obtain access, not just by logging into a system, but by convincing someone else to provision it for them.  Campaigns that blurred these lines, such as those impersonating SaaS support teams or abusing help-desk processes to gain OAuth authorization" - again, the whole Scattered Spider phishing mess, you know, with Cloudflare - "demonstrated how human trust can be engineered into a technical foothold.  This hybrid technique redefines 'remote access' as much psychological as technical.  Software vulnerability exploitation rose modestly, but remains a critical access path for opportunistic campaigns.
+
+"The most exploited vulnerabilities this quarter were not cutting-edge zero-days, but well-known vulnerabilities in network appliances and enterprise apps where patching lagged or migration hygiene fell short.  Even fully patched environments were compromised when legacy credentials or partial configurations reopened an old door.  The lesson remains consistent:  technical remediation without procedural rigor still leaves gaps wide enough for exploitation."  Wow, this is so well written.
+
+Anyway, all of that, all of what Coveware reported exactly tracks with what we've been seeing and covering.  As they wrote:  "The most exploited vulnerabilities this quarter were not cutting-edge zero-days, but well-known vulnerabilities in network applications and enterprise apps where patching lagged or migration hygiene fell short."  Remember, there was an instance, can't remember which, I think it was Cisco, where the people who were upgrading...
+
+LEO:  It's always Cisco, by the way.
+
+STEVE:  Yeah, I know.
+
+LEO:  It's a safe bet.
+
+STEVE:  The people upgrading failed to notice Cisco saying be sure to rotate your credentials when you do this.
+
+LEO:  Right.
+
+STEVE:  And they didn't.  And so, whoops, that caused a problem.  So in other words, these are preventable intrusions whose causes could be traced to devices that had been neglected and left unpatched.  Anyway, the report is so fascinating, as I've said, that I was tempted to share more about it, but we've got other things we need to get to.  So I've put its link to it here at the bottom of page 11 in the show notes, and anybody who's interested in this topic and wants more, or maybe send the link on to your IT people or your C-suite people to get their attention because, you know, this Coveware group, they've got a great, you know, microscope into the way this is all happening.
+
+LEO:  You could spend the whole show talking about these.  I mean, this is just - I mean, it's endless.
+
+STEVE:  Easy, yeah.
+
+LEO:  Yeah.
+
+STEVE:  Gareth Smyth said:  "Hello, Steve and Leo."  Hello.
+
+LEO:  Hello, Gareth.
+
+STEVE:  "I wanted to say I started watching and listening to the show, and I absolutely love it.  I've been working as an Information Security Analyst for just over a year, and I wish I had found this sooner.  I was only a young buck when the show started" - he said, parens, "(a toddler)."  So...
+
+LEO:  Yeah, pretty much most of our audience, probably.
+
+STEVE:  He said:  "I really feel like going back and listening to the rest of them.  There are probably so many important things that I have missed."  I guarantee it, Gareth.  But he says, "if life ever slows down."  Which, okay, that's not going to happen.  He said:  "Looking forward to tuning in every week for as long as it keeps rolling."
+
+LEO:  Aww.
+
+STEVE:  "Glad to have found a great resource, finally.  Thanks again, Gareth."
+
+LEO:  That's awesome.
+
+STEVE:  Okay.  So first of all, thank you for taking the time to send your note.  If you've only been listening for a while, please DO allow me to encourage you to go back.  I know that 20 years of material can be quite daunting, but back in the earlier days of the podcast, it was a lot shorter.  Also, there were a couple of series that we created.  One series of episodes carefully explained pretty much all of how the Internet itself works, and it became a classic run of episodes.  And another series focused on the operation of CPUs.  It turns out nothing has changed since then, even though those are, you know, legacy episodes, they're still as relevant today as they were back then.  I don't have at the tip of my tongue the episode numbers, but I know that our listeners are going to be sending me email during this intervening week, so I will have those episodes to report next week.
+
+And I also should note, Gareth, that since you're young, and we're old, there will be an end to this podcast eventually.  I don't know why or how it will happen.  But it will come.
+
+LEO:  Someday.
+
+STEVE:  And that's when you'll be able to go back and suck up all the old ones and start listening to them because you're not going to have any new ones.  So...
+
+LEO:  That's what I said when I was watching last night's World Series game between the Dodgers and the Blue Jays.  Someday there will be an end to this game.  I know you're not a baseball fan.  But you might be interested to know it went 18 innings, twice the normal number.
+
+STEVE:  Ohhh, that's a lot; right?
+
+LEO:  And it didn't finish till after midnight California time, after 3:00 a.m. East Coast time.  That's a lot, yes, that's a lot.  I couldn't make it.  I tried.
+
+STEVE:  And was it exciting?
+
+LEO:  Yeah, I mean, if you like baseball.  Baseball's not inherently that exciting.
+
+STEVE:  I've been told that, like, yeah, you have a lot of time to walk around and get beer and...
+
+LEO:  A lot of time to have hotdogs and - yeah, yeah.  It's mostly about sitting in the sun, eating beer and drinking hot dogs.  Or the other way around.
+
+STEVE:  Kevin van Haaren said:  "Hey, Steve.  In talking about the change in NIST's password policy in Episode 1048, you mentioned there is no reason to change your password unless there's been a breach.  I do think there is a scenario where changing your password (very occasionally) does have a benefit. The classic example would be LastPass.  LastPass updated their encryption system, but it wasn't used for users with existing passwords until a user changed their password.  Someone changing their password every three to five years would've avoided any issues.  Obviously, LastPass's problems were their own fault, not users'; but I see changing my password manager password every five years to be a bit of belt-and-suspenders.
+
+"I think one reason people avoid this is because when you say 'new password' you mean 'completely new password.'  My policy for changing passwords, when there has not been a breach, is to use my existing password, but add one to three random characters to the end.  This has the added benefit of slowly making your password longer, as well.
+
+"Finally, you talked about companies having a policy of not being able to re-use your last five passwords, and people just changing their password five times to get back to the original.  The policy at my company is you cannot use your last 10 passwords.  Plus, once you change your password, you can't change it again for 48 hours.  With that, it would take 20 days to get back to your original password, which you probably forgot by then anyway.  Signed, Kevin van Haaren."
+
+So, okay.  Kevin has a point about LastPass and that particular password manager not updating its password protection features - remember the number of times that the password is hashed before it's used to generate the key.  You know, that seems like a special case to me.  Kevin's note about appending one to three additional random characters to the end, causing his password to grow over time, okay, that's interesting.  Presumably, and this is what he said, this is for something like the master password which you know yourself, which is then used to unlock all other passwords since those "all other passwords" would likely (and hopefully) be totally random gibberish.  Doesn't make any sense to add any characters to them.
+
+So I'm sure that by now most of us have absolutely no idea what any of our individual passwords are.  I certainly don't.  They're just all gibberish.  But I need to unlock Windows and my various Apple iDevices using a password that I do know.  So for what it's worth, those are very few and far between.
+
+Jane said:  "Greetings, Steve.  In the episode, it was mentioned that 'The F-Droid app itself would first need to be obtained from the Google Play store.'  However, as someone who uses a phone with no Google services and gets most apps from F-Droid, I'd like to correct this.  F-Droid was never available in Google Play store.  Rather, you download it from their website.  More so, I don't think Google would even allow it in their store, given some of the apps they carry, such as third-party YouTube clients, which are leagues ahead of the official one, I might add.
+
+"So I don't think" - and here she's quoting me.  "'So, technically, it's an application which accesses a repository - it's not a store' is quite right, given that F-Droid is both the app (which you can use with multiple third-party repositories, like IzzyOnDroid) AND the main repository, which you don't have to use the official app to access."  And she said:  "See Droidify."  She said:  "However, this makes one think of another method of downloading apps, which indeed isn't a store at all, which is Obtainium.  You can point it to a variety of sources, like git repos or, again, F-Droid.  Would even individual, self-hosted git servers have to comply with the same rules?"
+
+She said:  "Can't wait for Leo to try GrapheneOS!  Have been its user for more than a year now and could not be happier."
+
+LEO:  Good.
+
+STEVE:  "Degoogled mobile OSes are more relevant than ever.  They need more publicity from more sources."
+
+LEO:  I agree.  I agree.  I have my Pixel 9 right here, ready to go.  So I think I'll just...
+
+STEVE:  Yeah.
+
+LEO:  Maybe I'll do it on a Club Special so you can watch me tear my hair out.
+
+STEVE:  So Jane, I appreciate the corrections and clarifications.  Having myself zero experience with F-Droid, I should have been more careful with my pontificating.  I'm glad everyone heard what you were able to clarify and add.  Many years ago, when I was experimenting with the discontinued Zeo sleep-tracking headband, I needed to sideload the Zeo app for Android since it had long since been retired from the Play Store.  Doing that was simply a matter of copying the file to the proper place within the Android file system.  So it sounds as though F-Droid is similarly installed, you know, just a simple sideloading.
+
+LEO:  Right.
+
+STEVE:  This does bring up the question of the legal status of F-Droid and the open source programs it catalogues.  If Texas SB2420 should survive to take effect on January 1st, you know, against the suits which have been filed since, it seems clear that F-Droid and its apps would not be compliant.  So, you know, if F-Droid is worried about that, they've got till the beginning of the year to figure out what they want to do.  Doesn't sound like they're going to be willing to require people to assert their age.  So again, all of this legislation is creating a huge mess.  So Jane, thanks again.
+
+CJ said:  "Steve, as a long-time Security Now! listener, Club TWiT member, and SpinRite owner, I am deeply immersed in the TWiT ecosphere. Having gained valuable insights from you, I believe this email explanation will only serve as a reminder of the importance of certain security strategies, including why there's actually a case to be made for changing passwords with some frequency."
+
+So CJ says:  "The primary objective of changing passwords regularly is to mitigate the risk of unauthorized access to your accounts by someone who has gotten your password without your knowledge BEFORE they have a chance to try it.  It's a timing game: the clock starts as soon as they have your password, and someone gets around to using it.  Remembering that there is a lag from exfiltration to discovery of the treasure, then probably being posted for sale on the Dark Web, to the point when someone will actually try it, it may be a month or more.  If you have routinely changed it in that time, you may dodge that bullet.  Risk reduction.
+
+"Given the inherent difficulty in trusting third parties to safeguard our secrets, it's crucial to recognize that relying on them to promptly inform us of potential breaches can be a fool's folly.  Examples that come to mind are the notorious notification delays experienced by Yahoo and LastPass, underscoring the futility of relying on companies for timely breach notifications."  Certainly no argument there.
+
+"Underscoring the risk, a few moments after you reported the announcement of the NIST 'don't change' policy, you talked about another method where our passwords are being compromised without any warning:  they may be transmitted via satellite, making them vulnerable to worldwide interception.  You're not going to receive a notice about that anytime soon."  True.
+
+"To effectively reduce the risk of unauthorized access, I still think it's advisable to change passwords with a frequency commensurate with the sensitivity of the information being protected.  For my brownie baking blog, no change necessary,  But for my millions, maybe quarterly.  For my trillions, monthly.  And for the nuclear codes, weekly."
+
+He said:  "Given the convenience of password" - I don't know if CJ is a he or a she, but CJ said:  "Given the convenience of password managers, which allow for effortless changes in under a minute, I will continue to allow password change reminders from my financial institution, regardless of a lack of NIST recommendations, especially since my bank has abysmal MFA options.  This practice exemplifies a prudent risk mitigation strategy and a fundamental security practice.
+
+"Not expecting to change your or Leo's mind, but hopefully you can acknowledge to your listeners that there's truly some merit to changing key passwords without having to wait for a notification.  Knowing the risk and how to mitigate it puts the decision into the hands of information owners.  Enjoy the show, and looking forward to tuning my DNS with the latest and greatest tool. Respectfully, CJ."
+
+Okay.  So fair enough.  I wanted to share CJ's thoughts since I thought that they accurately and clearly expressed the alternate reasoning in support of periodic password change.  One of the most significant changes that has occurred, which has been enabled by the popularity and success of password managers, is that no single password is being used today by more than one third-party service.  So this prevents us from having all of our passwords in a single basket.  It's true that our password manager's master password is, literally, all of our passwords in a single basket.  But in any properly designed password manager, that password is only used locally to decrypt the encrypted vault blob.
+
+The other thing I would note is that any and all of our high-value accounts, you know, those millions and trillions that CJ mentions, should really be protected by more than any static password, no matter how often it is changed.  Today we have one-time passwords - which are inherently in constant flux - and passkeys which don't even have any password that needs changing, that is being given to an outside entity.  So I guess my reply to CJ would be that I understand and can appreciate his or her points. But as our needs for increased security have grown, and certainly they have, the use of very powerful password-replacement authentication technologies have also become available.  So where rapid password changing might have once been a useful strategy, and I mean decades ago, when NIST adopted those rules, today we have superior solutions where and when we really need extra security.
+
+LEO:  Well, changing the password kind of implies that it will somehow be discovered.
+
+STEVE:  Right.
+
+LEO:  Or brute-force cracked.
+
+STEVE:  Exactly.
+
+LEO:  But if your password is long - mine's, I don't know, 30 or 40 characters...
+
+STEVE:  Yeah.  It's not going to be brute forced.
+
+LEO:  It's not going to be brute forced.
+
+STEVE:  No.
+
+LEO:  And I'm not writing it down anywhere.  I'm not...
+
+STEVE:  And any satellite that's broadcasting it would be broadcasting the hash, which is all the bank has to lose.
+
+LEO:  Right, right.
+
+STEVE:  So, I mean, I guess I want to give some deference to somebody who is insanely security conscious, who wants to, like, over change their password.
+
+LEO:  I would use the word "paranoid."
+
+STEVE:  Okay.
+
+LEO:  Not that, look, of course it's easy with a password manager.  Be my guest.  Change it as often as you like.  The reason it's bad advice in a corporation is what we've talked about, which is that people don't use password managers.  They just add a number.  Or, you know, they have bad passwords to begin with, and making a second bad password doesn't improve security.  It's just - it's security theater, is I guess the point.
+
+STEVE:  Yeah.  Also, one concern about password changing is we don't know what happens with the password you enter into their password change form.  It's in the clear.  It's your password that you're providing.
+
+LEO:  Oh, it's a good point.
+
+STEVE:  If it's hashed in the browser, then that's a good thing.
+
+LEO:  Fine, right.
+
+STEVE:  But if it's sent to the other end, then it's being sent in the clear every time you change it.  Every time you change it represents an opportunity...
+
+LEO:  So you're increasing - yes.
+
+STEVE:  Yes, you're increasing the number of instances of vulnerability up from zero, essentially.  If you don't change it, it's never being sent in the clear.  So you'd have to really know what's being sent to the other end.  It's going to be sent over HTTPS.  So that's going to be encrypted.  But if the concern is that it's going to be intercepted, then you can have a man-in-the-middle attack...
+
+LEO:  Being transmitted.
+
+STEVE:  Yes.  And we know that today's topic is DNS cache poisoning.  The reason you poison a cache is to divert users to some other server.
+
+LEO:  Right.
+
+STEVE:  So I'm happy leaving my passwords as they are.  Crazy long, total gibberish, cannot be brute-forced, and never going over any wires in the clear.
+
+LEO:  And if you're worried, go to HaveIBeenPwned every once in a while and use their password checker and see if your password's been discovered somehow magically.
+
+STEVE:  Yeah.
+
+LEO:  If you need something to do.
+
+STEVE:  Yeah.
+
+LEO:  I don't know.  I don't mean to dismiss it.  CJ, of course change it as often as you feel like it.  All right.  Back to the show.  Steve?
+
+STEVE:  They just bought somebody.
+
+LEO:  Somebody just bought them, yeah.  There's a, yeah, there's - I remember reading a story about Veeam.
+
+STEVE:  Well, I think maybe they got purchased, but they also purchased somebody in today's podcast.  I mean, like in the content here.
+
+LEO:  Oh, you're kidding.
+
+STEVE:  No.  Maybe they bought...
+
+LEO:  Oh, they did, they bought Securiti with an "I," yes.  They did, you're right.  I'm sorry.  Nobody bought them.  Veeam has signed an agreement to acquire Securiti AI, at Data Privacy Management Innovator.  $1.7 billion.
+
+STEVE:  Okay, there's somebody else.  I don't know...
+
+LEO:  There's somebody else.
+
+STEVE:  I don't think it was Coveware, but it was one of the - something that I was talking about.  I saw that they had just been acquired by Veeam.  I thought, oh, they're a sponsor.
+
+LEO:  Yeah.
+
+STEVE:  Anyway, Nathan Ramsay said:  "Hi, Steve.  Today, Java voluntarily asked me if I wanted to remove it because I had not used it in six months."
+
+LEO:  Yeah.  I love that.
+
+STEVE:  He said:  "I was so confused, then impressed."
+
+LEO:  Yeah.
+
+STEVE:  He said:  "My hat goes off to you, Java.  What software in its right mind would volunteer to remove itself to keep my PC's attack surface a little smaller?  The model is usually more akin to 'let me get my hooks in so I can stay here forever and offer you more services and apps in the future.'"
+
+Nathan wrote:  "For reference, this happened when the Java update icon popped up in my System Tray."  He says, "Okay, fine,  we'll call it the Notification Area," he says, "as is normal when a new update is available.  I couldn't remember why I had needed Java in the past, but I clicked update anyway, which is when it proceeded to recommend its own removal.  Google shows me comments about this from at least four years ago, so I guess this is old news, but it was new to me.  I thought you and Leo would appreciate it, too, if you didn't know.  Longtime listener.  Thanks for all you do.  Yada yada yada. / Nato."
+
+Okay.  So I recall the same thing happening for me many years ago, and I agree that this is the way all security software should work.  Imagine that an IT professional logs into an enterprise device and is greeted with an intercept message which reads:  "You know, no one has successfully logged into this device's publicly-exposed SSH server in the past six months, but 14,723,402 attempted logins have failed.  If this service is not needed, perhaps it should be disabled.  Would you like me to do so for you now?"  Wouldn't that be something if we lived in a world like that?
+
+Along those lines, and Leo, this is to your point about Apple's iOS asking if you'd like this app to keep tracking you, Apple's iOS recently notified me of some access permissions I had previously given to some app.  And it proactively asked me, at a reasonable time, whether I wished to continue granting that permission.  You know, not enough of the world works this way.  Security culture really needs to catch up.  And so Nathan, thank you for the reminder about Java.  They're getting it right.  And you know, bravo for them.  And it's apparently working.
+
+LEO:  Yeah, yeah, yeah.  By the way, you're right, Veeam owns Coveware.
+
+STEVE:  Ah, that's what it was.
+
+LEO:  They bought them last year.  Yeah.
+
+STEVE:  Oh, okay.
+
+LEO:  Thank you to Paul for finding that.
+
+STEVE:  Cool.
+
+LEO:  They bought them in April of 2024.  And Coveware runs independently.  But, yeah, it just shows you that Veeam really is...
+
+STEVE:  Yeah, they're on it.
+
+LEO:  Our sponsor is on it, yup, yup.
+
+STEVE:  David Benedict wrote:  "Hi, Steve.  Sorry this is probably like the fifth or sixth email I have sent on this episode."  People, like, pause and then write email, and then they hit continue.  Right.  "But if I don't send the email NOW, all caps, the thoughts sometimes escape my skull, never to be found again."
+
+He said:  "You seemed very excited at the prospect of what could come forth from the IAB/W3C Workshop coming (probably already happened)."  And that was the one where they were going to be beginning to get serious about age verification and building the technology into Internet standards.  David said:  "I find this a bit worrisome.  If they do in fact come up with some sort of 'filtering' methodology, who's to say that our government won't suddenly decide LGBTQ websites all require being over 18?  Or maybe all websites about Islam all require being over 18?  I think this could be a slippery slope to start down.  Just my two cents.  Thanks, David Benedict."
+
+Okay.  So David is suggesting, or at least wondering, whether making privacy-respecting online age-determination more accessible and technically feasible might open the floodgates for politicians to more readily start age-restricting much wider swaths of behavior and Internet access.  I certainly don't like the idea of that happening.  But it seems to me that the pervasive and widespread pattern of behavior we're seeing from politicians here in the U.S., in the UK, in the EU, in Australia and elsewhere is that they're already enacting access restriction laws without any regard for how those laws will be technically implemented.
+
+I would imagine that somewhere in the bowels of their inner sanctums, you know, we techies are being derided with a wave of their hands and statements like, "Well, those techie geeks will figure out how to do it.  That's not our problem.  Our job is to tell them what they need to do."  So I doubt that the law makers have much concern for how any of this would actually be accomplished.  They just want to get the laws on the books so they can campaign on their success in having done so.  And in the wake of those laws, it falls to us techies to figure out how to preserve as much of everyone's privacy as possible, while accomplishing what the laws require.
+
+So on balance, I see no evidence so far that politicians would be much more inclined toward restrictions if it were made any easier to do.  But I also see David's point in the abstract.  It's certainly possible to imagine a future where the well-accepted ability of any content provider to obtain its online visitors' age range without compromising their identity or other aspects of privacy could facilitate the passage of additional legal restrictions.  But even if this were to come to pass, the proper venue for challenging those laws is not the technology, but legal challenges using whatever governing Constitution may be in effect.  And it seems, you know, it seems to that end since we already have such laws about the technology happening, making them safe, privacy-preserving as a top priority is what needs to happen as soon as possible.
+
+So, yeah, I remain excited about the IAB and the W3C's work because that is where these standards will emerge from.  And it's a little dispiriting that they appear to be in the so early stages of, well, what problems are we really trying to solve here, blah blah blah.  It's like, okay, just, you know, please, like, work on weekends.
+
+A listener of ours, Charles Turner, dug out the specific requirements from the lengthy document which I summarized last week.  The precise requirements are interesting, and they're what we're likely to eventually see taking effect.  So I just - there are only nine points.  I'm going to go through them because Charles sent them to me.  He wrote:  "Steve, just a quick note to follow up on your coverage of the updated Password Verifiers in NIST SP 800-63B.  The following requirements apply to passwords.
+
+"And they are, first, verifiers and CSPs SHALL require passwords that are used as a single-factor authentication mechanism to be a minimum of 15 characters in length.  Verifiers and CSPs MAY allow passwords that are only used as part of a multi-factor authentication process to be shorter, but SHALL require them to be a minimum of eight characters in length."  Okay, so 15 characters if it's a single factor, a minimum of eight if there's something else that is required for authentication.
+
+"Second, verifiers SHOULD permit a maximum password length of at least 64 characters.  So maximum password length of at least 64.  Third, verifiers SHOULD accept all printing ASCII characters and the space character in passwords.  Fourth, verifiers SHOULD accept Unicode characters in passwords.  Each Unicode code point SHALL be counted as a single character when evaluating password length."  Boy, Leo, that's going to cause some problems.  Wow.
+
+LEO:  Yeah.
+
+STEVE:  "Five.  Verifiers SHALL NOT impose other composition rules requiring mixtures of different character types for passwords.  Six, verifiers SHALL NOT require subscribers to change passwords periodically.  However, verifiers SHALL force a change if there is evidence that the authenticator has been compromised.
+
+"Seven, verifiers SHALL NOT permit the subscriber to store a hint that is accessible to an unauthenticated claimant.  Eight, verifiers SHALL NOT prompt subscribers to use knowledge-based authentication, you know, for example, 'What was the name of your first pet?,' or security questions when choosing passwords.  And finally, 'verifiers SHALL request the password to be provided in full, not a subset of it, and SHALL verify the entire submitted password, not a truncation of it.'"
+
+LEO:  Good.
+
+STEVE:  So, yeah.  Anyway, those are...
+
+LEO:  Those all seem sensible.
+
+STEVE:  Yeah.  Except Unicode.  I, I mean, I get it.  But, oooh.
+
+LEO:  Well, I understand.  You have to because there's foreign language speakers.
+
+STEVE:  We're not all good English - yeah, yeah.
+
+LEO:  Unicode is a recipe for disaster.  I know, I understand what you're saying.
+
+STEVE:  Boy.
+
+LEO:  But you have to.
+
+STEVE:  Yeah.  Charles finishes, saying:  "As mentioned previously, I am a Navy retiree and currently working in the defense contracting realm.  It will be interesting to see how long it takes for the NIST's updated guidance on passwords to take effect throughout the federal government."  And yes, it will be.  It will not be happening overnight.
+
+LEO:  Yeah.  These all seem sensible, though.  They seem like they're up to date.
+
+STEVE:  Yeah.
+
+LEO:  They're correct, yeah.
+
+STEVE:  I think they are 100% workable.  That's...
+
+LEO:  I love it that they're requiring 15 characters.
+
+STEVE:  Yes.
+
+LEO:  And they say you must allow a password longer than 64 because so many bank sites, you know...
+
+STEVE:  Oh, yeah.  Based on weird backend technology, they're stuck at eight.
+
+LEO:  Right, right, yeah.  Although I'm not crazy about if you're doing two-factor it can be as short as eight.  But I guess that makes sense.
+
+STEVE:  Yeah.
+
+LEO:  It's good.
+
+STEVE:  Yeah, it is.  And thank you, Charles.  David Eckard wrote:  "Please encourage TWiT.tv to pull your NIST password segment and release it as a YouTube short. This topic is too important to not do that."
+
+LEO:  Oh, good.  We will.  Yes, that's a great idea.
+
+STEVE:  So David, I will say that it has definitely captivated a large portion of our listeners.  And I agree that it would likely make a good TWiT short.  Fortunately, our Chief TWiT - and company - have all just heard your suggestion, and the ball is now in their court.
+
+LEO:  I am sending it off right now.  They may have already done that.  I don't know.  They pick a lot of clips, and your clips are often the most viral clips.  And that would be a natural for virality.  So I'll send that along, yeah.
+
+STEVE:  A frequent writer from the show notes named Michael Cunningham sent me a note.  He said:  "Hi, Steve.  In regards to Episode 1048 where you talked about NIST's guidelines changing, it made me think of several experiences I've had in a corporate environment that might justify having password rotation - I call it 'poor password hygiene' - and I wanted to hear your thoughts.
+
+"Not long ago I was still doing desktop support on occasion, and I went to a user's desk to help with an issue, but she had stepped away.  I said out loud to myself, 'Hmm, she's not here, and she locked her computer, so I can't help her."  At which point her nearby coworkers immediately said "Oh, her password is monkey123!"  My thoughts were well, at least I know within 90 days, it won't be that any longer.  The reasons why they knew her password seemed to relate to them 'needing' - he has in quotes - "to access her PC when she's away for whatever reason.
+
+"What if a user uses their corporate password on an external site, and then that site gets compromised?  Bad guys might try to use the same password on other accounts they can tie to the user.  I've also had more than once a user just accidentally send me their password because they went to type it in, but had the wrong window in focus and sent it to me instead.
+
+"Another story to share is about the changing your password five times to get back to the first one.  I had a user tell me he did this, so I thought, hmm, maybe there is a fix for that.  And sure enough, in Active Directory you can set a 'minimum password age' in days to try to discourage this, which I did.  A few weeks later the user came by and simply said to me 'You're evil.'" 
+
+And he finished:  "Anyways, hoping to hear if you have thoughts on this.  Sincerely, Mike Cunningham, SpinRite owner, Club TWiT member, watching Leo since ZDTV."
+
+LEO:  Wow.
+
+STEVE:  Okay, so Michael, I appreciated the "You're evil" sentiment, which is easy to understand, right, from that employee.  In this case, I'm unable to see what's gained by increasing the friction between IT and the rest of the company's workers.  I think my takeaway is that users will be users, and that there's a limited amount of corralling, cajoling, and forcing that any reasonable person should or will tolerate before they rebel.  No one likes being told what to do, especially when what they're being told to do is indefensible, annoying, and makes no sense.  The clear consensus with the industry has finally awoken, which is to arbitrarily force people to change their passwords for no reason, and without any explanation as to why, is abusive harassment.
+
+Is it possible to force people to constantly change their password?  Yeah, of course.  Technology can force that.  But it's also a huge inconvenience which, as we've seen, users will actively struggle to work around.  And users are basically sane.  They understand the way the world works.  So they rightly see that, you know, those geeks from the dreaded IT department are forcing them to do something for no reason other than that they can.  The employees are powerless, and they're pissed.  This is why those NIST guidelines were finally changed.  Harassing users for no good reason causes users to "hate" security.
+
+LEO:  Makes sense.
+
+STEVE:  And that's not good for anyone.  Right.
+
+LEO:  Bingo.
+
+STEVE:  Having people upset with and annoyed by their company's IT staff is not only bad politics, it's bad for actual security, since reasonable people are turned into rogue employees who don't want to follow arbitrary-seeming rules.  "Oh.  Don't click on that link?  Well, I'll show them!"
+
+Having an employee come by to tell you that "You're evil" after making their lives further difficult for no reason other than that you can, doesn't feel like progress to me.  Instead of being everyone's villain, how about becoming everyone's hero, right now, today.  Take the high road.  Implement the NIST guidelines immediately.  Drop all forced password changes because they serve no purpose whatsoever.  Enforce minimal password length and nothing else.  Take credit for bringing the light and start receiving your fellow employees' thanks for having made their lives a bit easier.  Be invited to parties.  Who wouldn't want that?
+
+LEO:  That's funny.
+
+STEVE:  NIST has just given you permission to be the good guy.  Take it.
+
+LEO:  Well done.  Well done.  That's very good.  Put that on the refrigerator at work.
+
+STEVE:  Time for our last break, Leo.  And we're going to talk about the return of DNS Cache Poisoning.
+
+LEO:  Oh, man.  Is this a propeller hat or not? 
+
+STEVE:  No.
+
+LEO:  No.
+
+STEVE:  Okay, a little bit.
+
+LEO:  You know what that means, when Steve says "a little bit."  You might want to get your propeller hats ready, ladies and gentlemen.  Now, let's talk about DNS Cache Poisoning.  I thought we were done with that.  I thought it was over.
+
+STEVE:  An objective observer could be forgiven for concluding that some things appear to be difficult to get right since trouble surrounding DNS cache poisoning is once again in the news.  Our longtime listeners will likely remember Dan Kaminsky's discovery - this was in 2008 - that the Internet's DNS resolvers were issuing easily predictable queries to upstream, more authoritative DNS nameservers.
+
+Dan realized that the super-efficient, lean-and-mean UDP protocol used by DNS itself contained no mechanism of any kind for authentication, and that the DNS protocol also provided none.  This meant that nowhere in the DNS resolving system was any authentication provided.  The ancient system upon which the entire Internet depended (DNS) is based on trust.
+
+So how could this trust be abused?  A clever attacker would send a DNS query to a resolver asking for the IP of a domain that had just expired from its cache.  Since every DNS query returns the remaining cache life of any cached domain, like every response tells you how much longer that will be in the cache.  So it's possible to know when a request for a domain will not be served from a resolver's cache and will, instead, cause that resolver to ask an upstream more authoritative nameserver for the domain's IP address.
+
+So the attacker issues their request to the victim DNS resolver. The attacker knows that this will cause that resolver to, in turn, ask another nameserver for the domain's IP, since the domain's IP is no longer being cached locally.  It will have expired, and the attacker knows exactly when that occurred.  But before the upstream authoritative nameserver, the real one, the authentic one, has had a chance to reply, the attacker themselves supplies their own fraudulent answer to the waiting DNS resolver.  And because neither the UDP nor DNS protocols contain any authentication mechanisms, there's no way for the waiting DNS revolver to know that the answer it received immediately to its query is fraudulent and that it was not returned by the nameserver that it actually asked for the answer.
+
+So consider what this means.  Each DNS record contains its own TTL (Time to Live) parameter, which is the length of time in seconds that the record is allowed to remain in a resolver's cache.  Since this TTL could specify, for example, a full 24 hours, if a bad guy is able to sneak their own fraudulent DNS record into a DNS resolver's cache, it could even be, well, that would be a TTL that would be sitting in there for one day.  It's even possible for it to be a week in some cases.  From that moment on, as soon as that fraudulent record is snuck into the cache with a TTL of a day or a week, anyone and everyone who asks that cache-poisoned resolver for the IP of that poisoned domain will receive instead whatever IP address the attacker managed to plant into the resolver's cache.
+
+In this fashion, cache poisoning allows for wholesale Internet traffic redirection at scale.  This is why the whole industry went nuts in 2008 and basically created a secret synchronized replacement of all of the buggy DNS servers at the time, fixing them all at once because they couldn't even allow a window of opportunity for this attack because it is so feasible, and it could have at the time in 2008 have been so devastating.  
+
+Successfully poisoning a DNS cache requires a remote attacker to be able to spoof the reply that the requester is expecting to receive from the authentic authoritative nameserver.  For this to be done, the fraudulent DNS reply's parameters need to match what's expected. UDP packets are issued from the resolver's IP and port, to a destination IP and port 53.  And in order to determine which replies match up with which queries, every query also contains a 16-bit ID.
+
+Back in 2008, Dan Kaminsky realized that the DNS resolvers of the era were asking their underlying operating systems to assign an outbound port, to assign them an outbound port for the query that's going to be made upstream.  And also he realized that the resolvers were simply assigning consecutive 16-bit IDs to the queries.  No reason not to.  The IDs were not a security mechanism.  They were just there to tag each query so that, for example, if the same remote resolver were given three queries, they would have different ID numbers so that when the three replies came back, they could be assigned to the proper waiting outstanding queries.
+
+So since the operating systems tended to assign ports in upward consecutive order, they just, you know, they gave it like an outbound query, you know, port 30129.  Then 30130.  30131.  30132.  Just consecutive.  All the way up until they hit a configured upper limit.  Then they wrapped around back to the beginning.  So DNS queries in 2008 were being sent from a readily predictable port, with a readily predictable ID number.  And that was the problem.  Sequential ports and sequential IDs.
+
+If an attacker could arrange to observe a query, a fresh query made from the targeted resolver, the resolver it was targeting to poison, they would be able to see which 16-bit port the query had just been emitted from and which 16-bit query ID it used.  This would allow the attacker to generate an accurate guess for spoofing their subsequent attack reply.  And as it turns out, it's easy to cause a resolver to send a request that an attacker can observe simply by causing the resolver to ask for the IP address of any domain whose DNS nameserver the attacker can monitor.  Right?  So if you ask that resolver for the IP address of a domain whose DNS nameserver the attacker's traffic can monitor, so they just set up their own nameserver, then they immediately know what port that came to them from and what 16-bit ID was used.
+
+They know exactly where that resolver's counters are, and the OS counter.  So that allows them that ability.  And everything is now in place for an attack.  How does that happen?  The attacker waits until the domain they wish to spoof and poison has just expired from the targeted resolver's cache.  This means that a fresh request for that domain's IP will need to be provided by an upstream authoritative nameserver.  So the attacker first requests the IP of a domain whose nameserver they're monitoring.  This tells them which 16-bit port and 16-bit ID was just used by the targeted resolver.  They then ask the targeted resolver for the IP of the domain they wish to spoof.  They know that the resolver will use the next successively greater port issued by the underlying operating system, and the next successive query ID, issued by the resolver's own query software.
+
+Then, immediately after issuing the request, they send a barrage of spoofed replies clustered around the expected source ports and query IDs, hoping that one will match up with the actual query and beat the real nameserver's reply.  And it turns out that in practice this works.  The integrity of the Domain Name System is relied upon for so many purposes beyond just finding the proper IP for a remote website.  For example, DNS is commonly used now to prove control over a domain by asking a domain owner to place a specific TXT record into a domain zone.
+
+LEO:  I've done that many times.
+
+STEVE:  That's how I get my certificates.  Huh?
+
+LEO:  I've done that many times.  You get a TXT, yeah, yeah.
+
+STEVE:  Yes, it's how we often - yep.  It's like, put this text record in your DNS, and then we'll verify that you've proven ownership of the domain.  And that's how DigiCert verifies my ownership of GRC.com.  So over time, DNS has become quite an authentication workhorse.  So having it compromised represents a real problem.
+
+Back in 2008, Dan's solution was simple and straightforward:  Don't allow a DNS resolver's queries to be predictable.  Rather than having queries issued from successive 16-bit port numbers carrying a 16-bit query ID, simply require those parameters to be random.  Since port numbers are 16 bits and query IDs are 16 bits, this gives us 32 bits of potential entropy per query.  Now, in this day and age, 32 bits isn't very much, so everyone would feel much more comfortable if we had a lot more.  But unfortunately, even in 2008, it was way too late to go back and change the DNS protocol for this purpose.  This was all designed long before bad guys were even a consideration.  So 32 bits is the only thing that's available.  But still, 32 bits gives us 4.3 billion port and ID possibilities per query.  So that's likely sufficient to dodge this very worrisome bullet.
+
+Now, our listeners will also know that, back in 2008, I created another GRC online service somewhat similar to GRC's ShieldsUP! port scanner, but this one was able to test what I called the "spoofability" of whatever DNS resolvers the visitor was using.  If you go to grc.com/dns/dns.htm, that's our Spoofability Tester.  And it literally, it forces the user's resolvers to send GRC a huge number of queries, and GRC looks at the source ports and query IDs and charts them on all kinds of grids and scales and does statistical analysis and all kinds of cool stuff.  Anyway, that's there.
+
+So today's podcast is titled "DNS Cache Poisoning Returns" because it has turned out that things are not as settled and put to bed as we hoped and assumed.  Ars Technica's Senior Security Editor Dan Goodin explained the new worries in his piece just last Wednesday, writing:  "The makers of BIND, the Internet's most widely used software for resolving domain names, are warning of two vulnerabilities that allow attackers to poison entire caches of results and send users to malicious destinations that are indistinguishable from the real ones."
+
+He writes:  "The vulnerabilities, tracked as CVE-2025-40778 and 40780, stem from a logic error and" - get this - "a weakness in generating pseudorandom numbers, respectively."  Unbelievable.  What year is it, Leo?  "They each carry a severity rating of 8.6.  Separately, makers of the Domain Name System resolver software Unbound warned of similar vulnerabilities that were reported by the same researchers.  The Unbound severity score is 5.6.
+
+"The vulnerabilities can be exploited to cause" - this is Dan writing - "exploited to cause DNS resolvers located inside thousands of organizations to replace valid results for domain lookups with corrupted ones.  The corrupted results would replace the IP addresses controlled by the domain name operator, for instance 3.15.119.63 for arstechnica.com, with malicious ones controlled by the attacker.  Patches for all three vulnerabilities became available Wednesday.
+
+"In 2008, researcher Dan Kaminsky revealed one of the more severe Internet-wide security threats ever.  Known as DNS cache poisoning, it made it possible for attackers to send users en masse to imposter sites instead of the real ones belonging to Google, Bank of America, or anyone else.  With industry-wide coordination, thousands of DNS providers around the world, in coordination with makers of browsers and other client applications, implemented a fix that averted this doomsday scenario.
+
+"The vulnerability was the result of DNS's use of UDP packets.  Because they're sent in only one direction" - by which he means there's no TCP handshake - "there was no way for DNS resolvers to use passwords or other forms of credentials when communicating with 'authoritative servers,' meaning that those have been officially designated to provide IP lookups for a given top-level domain such as .com.  What's more, UDP traffic is generally trivial to spoof" - indeed - "meaning it's easy to send UDP packets that appear to come from a source other than their true origin."  Dan got all that correct.
+
+"He then explains the problem that we all understand, and that the solution implemented 17 years ago, back in 2008, turned out to be insufficient.  He writes:  'At least one of the BIND vulnerabilities, CVE-40780, effectively weakens those defenses.'  The BIND developers wrote in Wednesday's disclosure:  'In specific circumstances, due to a weakness in the Pseudo Random Number Generator (PRNG) that is used, it is possible for an attacker to predict the source port and query ID that BIND will use.  BIND can be tricked into caching attacker responses, if the spoofing is successful.'"  And I say to that, un-frigging-believable that in 2025 that could be true.
+
+But Dan says:  "The CVE-40778 also raises the possibility of reviving cache poisoning attacks.  The developers explained: 'Under certain circumstances, BIND is too lenient when accepting records from answers, allowing an attacker to inject forged data into the cache.  Forged records can be injected into cache during a query, which can potentially affect resolution of future queries.'"
+
+He says:  "Even in such cases, the resulting fallout would be significantly more limited than the scenario envisioned by Kaminsky.  Red Hat wrote in its disclosure of 40780," which is the PRNG one:  "Because exploitation is non-trivial, requires network-level spoofing and precise timing, and only affects cache integrity without server compromise, the vulnerability is considered Important rather than Critical."  And Dan finishes:  "The vulnerabilities nonetheless have the potential to cause harm in some organizations.  Patches for all three should be installed as soon as practical."
+
+Okay.  So the first of the two CVEs, the 40780, is titled - the official CVE title for this is "Cache poisoning due to weak PRNG."  To which I say, really?  What?  First of all, one of the main topics of discussion throughout the early years of this podcast was the crucial need for high-quality random numbers for cryptography and Internet security in general.  Even when we're using public key crypto, public or private keys are used to encrypt and decrypt a secret symmetric key that's used to perform all of the actual work.  And that symmetric key better darn be random.  So the generation of utterly and absolutely unpredictable random keys has always been, still is, and probably always will be of utter importance.  You need entropy in order to have security.  
+
+So when we learn that in the year 2025, 17 years after the absolute importance of randomly selected 16-bit ports and randomly generated 16-bit query IDs, that the PRNG - the Pseudo Random Number Generator - being used by the Internet's most-used DNS resolvers, BIND and Unbound, are weak, well, you really have to shake your head.
+
+We know, we get it, that embedded systems which are cut off from the rest of the world, when they're just sitting there like in an unconnected wristwatch or some, you know, a sports app or something, you know, you have no access to the rest of the world, it's an embedded thing.  You know, it's your dishwasher, your toaster, who knows what.  They can have great trouble generating randomness, true, like anything unpredictable because they start from a known state, and they lack any source of unpredictable events or timing data.  They're just a little island.  It's understandable that they could have trouble generating anything that cannot be predicted.  Every single time they boot they're going to do the same thing.  So they can be forgiven.
+
+But they could also be hardly less, I mean, that, their lack of - the isolation and lack of having any contact with the world could hardly be any less true for any DNS resolver.  DNS resolvers are sitting by definition on a network, where they're continually receiving unpredictably timed and sized DNS queries.  They are bathing in unpredictability.  The queries being received from completely unpredictable ports, completely unpredictable IPs, and with completely unpredictable timing.  You never know when they're going to come in.  So DNS resolvers are continually subjected to a virtual blizzard of entropy.
+
+The only way any DNS resolver could possibly be starved of sufficient entropy for collection and use in continually re-seeding its Pseudo Random Number Generator if its designers just really don't care.  Or just are like somehow clueless about the way the world works.  And we don't want them designing our DNS resolution.  The phrase "due to a weak PRNG" just really annoys me because...
+
+LEO:  Should never occur.
+
+STEVE:  ...in 2025, yes, no device on any busy network has any business having a weak pseudorandom number generator.  It is just unconscionable.
+
+Now, the other CVE (40778) whose title is "Cache poisoning attacks with unsolicited RRs" (those are Resource Records), that's interesting since it suggests that there had been a means until this patch last Wednesday, which both BIND and Unbound were subjected to, where an attacker was able to supply unsolicited, which is to say unrequested, DNS replies, resource records, in response to a query that would have been accepted into the resolver's cache in such a way that they could be abused, that those unsolicited resource records could be abused by an attacker.  So that's a bug that has been fixed, and that's good.
+
+I did look around a bit, and I was unable to easily dig up any additional details about what exactly was meant by "a weak PRNG."  And frankly, I'm too disgusted to look any further.  I don't know to know what, like how it could possibly have been bad.  Because they had to try to not accept any additional entropy from the network they're connected to.
+
+LEO:  They probably just use some library; right?
+
+STEVE:  Sadly.  Sadly, yes.
+
+LEO:  Yeah.  They didn't want to write their own.
+
+STEVE:  Even TrueCrypt, remember TrueCrypt back in the day, when you were setting up a volume it said "Move your mouse around for a while."
+
+LEO:  Right.  Right.
+
+STEVE:  And there it was, brilliant, a source of unpredictable, no one could ever know how you moved your mouse, and you're streaming position data in.  And, you know, I talked about it, I called it "entropy harvesting."  It's the first component of the SQRL system I wrote.  It harvested entropy from all different sources inside the computer.
+
+LEO:  It's not hard.
+
+STEVE:  No.  The crazy Intel chips have all these performance counters.  Branch predictions missed.  You know, I mean, how I'm feeling today.  I mean, it's just all this stuff.
+
+LEO:  Let me ask you a question.  I mean, it's called a PRNG because it's a Pseudo Random Number Generator.  They cycle.  They repeat. 
+
+STEVE:  Yes.
+
+LEO:  Because no one's come out with a, I mean, you're not - you wouldn't want to generate a new truly random number again and again and again.  You use a random number generator.  Is the entropy that you're adding, is that - because most of the time when I use a random number generator it allows me to start it with a seed.  Is the seed the chaos?  Or is it more complicated than that?
+
+STEVE:  So we start with a CPU that is predictable.
+
+LEO:  Right.
+
+STEVE:  Right?  So if you start...
+
+LEO:  Deterministic, yeah.
+
+STEVE:  Deterministic, it's entirely deterministic.  So any algorithm, given an initial starting state...
+
+LEO:  Will repeat.
+
+STEVE:  ...will always do the same thing.
+
+LEO:  Yeah.
+
+STEVE:  Well, yeah, it will repeat, hopefully in a long time.  But while it's doing that, it may - but it will be a predictable sequence.
+
+LEO:  The whole sequence is predictable.  And so the seed starts the sequence somewhere in the middle of the sequence.
+
+STEVE:  Yes.
+
+LEO:  At an unknown spot.
+
+STEVE:  So today's good pseudorandom number generators have what they call an entropy pool.  And they are mixing this pool.  And so the real problem is that is the rate at which pseudorandom numbers can be needed.  So as you take entropy from the pool, you're literally depleting, I mean, this is all really bizarre.  But you're literally extracting entropy from a pool, reducing its entropy.  So if you take entropy out at a greater rate than you're putting it in, then this pool gets starved of entropy.  And so, I mean, it's really abstract.  We're so far away from a pseudorandom number generator being multiply this and add this to get the next number.
+
+LEO:  Right. 
+
+STEVE:  You know, those were simple-minded pseudorandom number - they are pseudorandom number generators.  But they're really dumb.  So there are Mersenne Twister, for example, is the name of a pseudorandom number generator which does this amazing stuff.  But ultimately, it can run out.
+
+LEO:  It's still deterministic.
+
+STEVE:  Yes, it's still deterministic, and it can run out of entropy.
+
+LEO:  Right.
+
+STEVE:  So you need to be constantly reseeding it.
+
+LEO:  I see.  I see.
+
+STEVE:  With new entropy.
+
+LEO:  And that keeps it from repeating.  I get it.
+
+STEVE:  Exactly.  And so it just keeps sending it off in different directions.  And the idea is that the design keeps any short sequence from being predictable.  And by the time it might start to be predictable, it's gone off in a different direction.  So you've reseeded the entropy before it was predictable enough to start being useful.
+
+LEO:  The sad thing is this whole problem with DNS cache poisoning was discovered by, as you mentioned, Dan Kaminsky, in 2008, 17 years ago.
+
+STEVE:  Right.  Right.
+
+LEO:  So and what's really sad is Dan, of course, passed away in 2021.  We talked to his mom; remember?
+
+STEVE:  Yeah.
+
+LEO:  We interviewed his mom after he passed away.  He's in the Internet Hall of Fame for that and many other accomplishments.  But he's very well known for having, you know, found this issue that could have been a crisis on the Internet, many say saved the Internet.
+
+STEVE:  Yeah.  He and I were onstage together at one point for the...
+
+LEO:  Yeah, you had some great stories about him, yeah, yeah.  And so it's very sad that it's back again posthumously.  But...
+
+STEVE:  Unbelievable.
+
+Copyright (c) 2025 by Steve Gibson and Leo Laporte.  SOME RIGHTS RESERVED.  This work is licensed for the good of the Internet Community under the Creative Commons License v2.5.  See the following Web page for details:  https://creativecommons.org/licenses/by-nc-sa/2.5/.
+
+
+
+

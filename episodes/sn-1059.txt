@@ -1,0 +1,1151 @@
+GIBSON RESEARCH CORPORATION		https://www.GRC.com/
+
+SERIES:		Security Now!
+EPISODE:	#1059
+DATE:		January 6, 2026
+TITLE:		MongoBleed
+HOSTS:	Steve Gibson & Leo Laporte
+SOURCE:	https://media.grc.com/sn/sn-1059.mp3
+ARCHIVE:	https://www.grc.com/securitynow.htm
+
+DESCRIPTION:  Code signing certificate lifetimes shortened by two years.  Sadly, ChatGPT is heading toward an advertising profit model.  The Python Package Index is strengthening its security.  BitLocker gets hardware acceleration, but not today.  New York City's mayoral inauguration banned Raspberry Pi.  An astonishingly good British time travel series.  A critical link between Vitamin D and magnesium.  A look inside the very bad MongoBleed vulnerability.
+
+SHOW TEASE:  It's time for Security Now!.  Steve Gibson is here.  He's a little miffed.  We actually get a rare Gibson rant over the lifecycle of code signing certificates.  It's going to be dramatically reduced for no good reason.  Ads coming to your ChatGPT?  Why did they ban the Raspberry Pi from the New York City inauguration?  And an astonishingly good British TV series that Steve wants you to know about.  Plus magnesium as a supplement, and then a look at very big, very problematic flaw called MongoBleed.  Boy, it's a jam-packed show.  Stay tuned.  Security Now! is next.
+
+LEO LAPORTE:  This is Security Now! with Steve Gibson, Episode 1059, recorded Tuesday, January 6th, 2026:  MongoBleed.
+
+It's time for Security Now!, the first show of 2026.
+
+STEVE GIBSON:  [Trumpeting]
+
+LEO:  Let's see if Steve has changed at all in the New Year.  No.
+
+STEVE:  And the answer is no, and that's a good thing.
+
+LEO:  And that's a good thing.
+
+STEVE:  So that's right.
+
+LEO:  Steve Gibson is here, the man of the hour, the man every Tuesday we tune in for to find out what the latest is in the security news.  Hi, Steve.
+
+STEVE:  Leo?
+
+LEO:  Yes?
+
+STEVE:  2026.
+
+LEO:  It is a new year.	
+
+STEVE:  It's going to be a new amazing ride for our listeners, for the world, for everything.  And I have to say, I'm developing another major platform feeling philosophical thing about security is beginning to evolve.
+
+LEO:  Ah.
+
+STEVE:  We will be seeing authentication is broken again because that's something.  But I'm really beginning to get a sense of diminishing returns.  I'm reminded of the fact that we can't build light rail because we have so overregulated ourselves, you know, on the off chance that something bad might happen to something somewhere that, you know, I mean, you can't prove a negative; right?  And so the insurance salesman makes his living by saying, but what if?  And as a consequence a lot of people have insurance that they actually may not actually ever need because that thing, you know, didn't fall of or whatever.  We're beginning to see - I'll be talking about another reduction in certificate length which has no justification.  And this new feature, SAC, Smart App Control, that landed in Windows 11, which cannot be turned off, where you can't allow apps you trust or exceptions.
+
+All of Microsoft's stuff has, until now, all of the Windows Defender, you could say, okay, fine, I want to dedicate this directory to things that you don't bother me about.  That's going away.  So end users are being increasingly inconvenienced in the same way and for the same reason that we can't build light rail in California.  It's, you know, it's like it's diminishing returns.  It's the belief that we can apply our fancy technology to solve problems where the presence of that technology creates a bigger problem than what it is trying to solve.
+
+And I think this is the year where we're going to begin to see, I mean, the signs have been there, and we've been reporting this until now.  I think it's going to mature, unfortunately, like this year and next, where things are becoming increasingly constrained in a mistaken belief that we're going to be able to fix this just by being more tricky, by applying technology to where mistakes, we're not really fixing mistakes much, and the human factor is still there.  Anyway, I...
+
+LEO:  You've got a new philosophical framework building, I understand.  
+
+STEVE:  Yeah, I...
+
+LEO:  I was actually, when you said that, I was hoping you were going to write a new operating system to replace the crappy ones we have.  But I guess that's off the table.
+
+STEVE:  Actually, you're going to see a bright light for Linux here because I...
+
+LEO:  I have gone all in on Linux.  I long ago was fed up with Windows.  And I'm not happy with the direction Apple's taking with macOS.  The only operating system out there I know of that I can really have it be exactly what I want, no more, no less, without ads, without constant, hey, you want to download Chrome, without any of that stuff, is Linux.  But we'll talk about that in a little bit.
+
+STEVE:  Yes, we will.  Today's podcast is titled "MongoBleed."
+
+LEO:  Which is not from "Blazing Saddles."  Mongo bleed.
+
+STEVE:  MongoDB is, turns out it's the fifth most popular database system in the world.  We'll be getting to that in a second.  But it's got a bad problem, and the cool thing is where we're going to look at it, it is a problem that we can perfectly describe, that is, this bug, which has been in there for eight  years.  So all versions of it, all 87,000 copies, at least 87,000 have been identified by Censys, are vulnerable.  And, oh, it's been a rocky Christmas and New Year's for those people.
+
+LEO:  Wow.
+
+STEVE:  We're going to talk about code signing certificate lifetimes being shortened.  A vote was made late last year to shorten code signing certificate lifetimes by two years.  Sadly, ChatGPT is heading toward an advertising profit model.  I want to touch on that.  The Python Package Index guys are strengthening their security, they just announced.  That's great.  BitLocker gets hardware acceleration, oh, but not today.  New York City's mayoral inauguration did the weirdest thing.  They banned Raspberry Pi.
+
+LEO:  And Flipper Zeroes.
+
+STEVE:  Yeah.  Like, what?  We've got, oh, I have news.  I was bending Benito's ear before we began recording about my discovery of an astonishingly good British time travel series.
+
+LEO:  Oh, I love time travel.
+
+STEVE:  Oh, Leo, if you have not seen "The Lazarus Project," there's no danger of me overselling this thing.
+
+LEO:  Oh, I want to see it.
+
+STEVE:  It is so - and it's - well, we'll get there.  Also we've got a news, just in the news following our Vitamin D special podcast last week, of a critical link between Vitamin D and magnesium.  You know, but our listeners don't know, that magnesium is another one of the things that I have focused on.
+
+LEO:  I take so much magnesium now.
+
+STEVE:  Good.
+
+LEO:  I had to back down a little bit because I think I was reaching saturation.
+
+STEVE:  As one does.  I'm going to delicately explain about that.
+
+LEO:  Well, there's all kinds.  There's glycinate.  There's citrate.
+
+STEVE:  Right.
+
+LEO:  There's threonate.  So, good, I want to hear more about this, yeah.
+
+STEVE:  Yup.  And ask me things because there are things I didn't get to.  I was a little self-conscious about, you know, talking a lot about supplements on our Security Now! podcast.  But the response I got from, like, people being reminded about Vitamin D, I think probably, Leo, many of our listeners have been aging along with us for the past 20 years.  And so, you know, when you're a Gen Z indestructible, you know, go all day and night person, you don't think about health in longevity.  But when you're in your late 60s and 70s it becomes something you tend to focus on a little bit more.  So anyway...
+
+LEO:  By then it's too late, of course, so...
+
+STEVE:  Yes, you do want to get - yes.  You want to create as much foundation for the future as you can.  And you and I both did 20 years ago.  Oh, and a Picture of the Week.  I'm so happy with my headline on this.  It was a picture that had a different caption.  I gave it one that I love, which I think everyone's going to get a kick out of.  So I think probably we've got an interesting podcast for kicking off 2026.
+
+LEO:  Well, it's about time, Steve.  I've been meaning to mention that.  No, this is the show, this is rapidly becoming our most popular program on the entire network.  And I'm not surprised.  It's all because of your stellar personality.
+
+STEVE:  Well, I spent the last two days writing it, so all of Sunday and all of Monday went into...
+
+LEO:  Yeah, I don't know if people understand how much work you put in.  I guess they probably do if they ever look at the show notes.  You basically write a novel.  Today's is 22 pages long of densely packed content.
+
+STEVE:  And this one I did write most of it, instead of just copying and pasting stuff.
+
+LEO:  You really put a lot of effort into it, so I appreciate that, Steve, and I know our audience does, as well.  I am prepared.  I have not looked at the Picture of the Week.
+
+STEVE:  I think you should just gaze upon it, let it sink in.
+
+LEO:  Gaze upon it.  I shall gaze upon it.
+
+STEVE:  We'll share your response.
+
+LEO:  I shall scroll up.
+
+STEVE:  And then I will explain.
+
+LEO:  And you can see my face as I see it for the first time.
+
+STEVE:  Then I will share the caption.
+
+LEO:  Okay.  Well, I've seen this many, many times.  Account verification.
+
+STEVE:  Oh, yes.
+
+LEO:  We just said about it [laughing].  They're telling me what the code was.
+
+STEVE:  So I gave this the caption, the sales pitch really, "Why reinvent the wheel?  Allow Agentic AI to take all the drudgery out of your repetitive coding tasks!"  And then...
+
+LEO:  Do you think this is vibe coded?  It probably is; isn't it.
+
+STEVE:  Isn't this wonderful?  And then we have the Agentic AI and vibe code produced a second-factor authentication screen.
+
+LEO:  It's beautiful.
+
+STEVE:  It has the headline "Account Verification."  And then it says:  "We have just sent the code 435841 to your phone number," and then it has that blanked out, but the last four digits are 8247.  "Please enter the code below to access your account."  So I just...
+
+LEO:  That's hysterical.
+
+STEVE:  Isn't that wonderful?  It's just...
+
+LEO:  Oh, my god.
+
+STEVE:  It is so good.
+
+LEO:  And when you first look at it you might not - oh, yeah, right, that makes sense.
+
+STEVE:  Yes, yes.
+
+LEO:  I guess I don't have to look at my phone now.
+
+STEVE:  It does speed up the login process.
+
+LEO:  Sure does.  That's hysterical.
+
+STEVE:  So that's good.  You don't have to wait for the code to arrive.  Okay.  So I want to begin this first podcast of 2026 by exploring around the edges of a recently decided and announced, and I have to say discouraging update that follows a disturbing trend which will have a significant impact on our industry.  And I understand that those behind it are claiming it will have a net positive impact on security.  But I question whether that's true, and I suspect that the positive impact it will most have is upon the certificate authority's revenues and profits. 
+
+Today's level of persistent cybercrime - which we know exists; right?  I mean, it's out there.  And the bad guys are more aggressive and frankly money hungry than ever.  It's the ability to get paid through cryptocurrency that has enabled this.  They've pushing the world, you know, the cybercrime baddies are pushing the world to a place where only software that is validly signed will even be considered for execution.  Signatures are required for iOS apps, Linux distros, secure booting, Android APKs, browser extensions, and all of the various gaming consoles and Smart TVs, and even the firmware for home routers, NASes, and cars.  All of this needs to be signed.  Linux, being inherently more open, is the only remaining OS where signing is either unnecessary or not strongly needed.
+
+LEO:  It's a different kind of signing.  I mean, when I download an app, often it is signed with a hash, you know, MD5 hash or PGP key to identify the developer.  But that's voluntary.  That's not from the operating system.  That's from the developer.
+
+STEVE:  Right, there is no requirement by the OS.
+
+LEO:  Right.
+
+STEVE:  Windows apps can theoretically run without signing, but only now, with Windows Defender there, if they are very well known.  The only hope any newly minted Windows app has of running today is if it's carrying a signature; and even then, only if that signature itself has previously established a strong reputation by virtue of the applications it has signed that have been previously seen that haven't caused problems.  You know, it's all about reputation.  But we've seen that other apps, like Notepad++, you know, which have a sterling reputation, will have serious trouble if they are unsigned or, as its author briefly attempted, are self-signed, you know, that landed with a big thud because everybody was complaining that Windows Defender wouldn't allow their update to Notepad++ that they'd had for years to run at all.
+
+So if Linux we could consider is lax, but probably not necessarily guarded, whereas Windows is, then macOS sets the bar about as high as it can go.  Any macOS application that's not signed is assumed to be malicious.  You really need to be a registered developer in good standing to have any chance of macOS running your software.
+
+So that's pretty much where we are today.  Essentially, anywhere it's practical to require a signature on software, a signature will be required.  The problem is, this is still an imperfect system.  Bugs in signed software are no less prevalent than in unsigned software.  So signing offers no guarantee about software quality, and bad guys are just as able to exploit bugs in signed, as in unsigned, software.  But it is certainly worthwhile to require a signature rather than not.  If nothing else, something somewhere is known by someone about the signer of the software.  There is at least some modicum of accountability and traceability.  So I can see that, you know, that it's not a bad thing.  And if a piece of signed software is discovered to be malicious, then its signing certificate can be immediately blacklisted, and is, so that nothing else signed by that presumably malicious certificate will be trusted.
+
+Now, it's not unreasonable to expect a Linux user to be cautious about what and where they obtain their software for their machines.  That's more the Linux user demographic; right?  But that's certainly not the case for the casual Windows user who browses around Microsoft's Windows Store looking for stuff to download and run, just because why not?  It's there.  So everything and anything that comes from the Windows app store is signed, must be, by a known developer.
+
+We're talking about what has become the crucial security topic of code signing today because, in another move that makes very little sense to me, late last year the CA/Browser Forum voted to reduce the maximum lifetime of code signing certificates for any certificates issued from March 1st of this year on.  So less than two months from now, the maximum lifetime of a code signing certificate that will be issued by any certificate authority will be reduced from 39 months, which is a comfortable three years plus three months, to a far less convenient one year and three months, taking two years off of what has been the pattern so far.
+
+LEO:  Wow.
+
+STEVE:  Yeah.  And this is occurring for no apparent reason that addresses no apparent problem.  Back in 2022 the policy was finalized that no code signing private keys could exist outside some form of hardware token or HSM which would prevent their theft.  That policy took effect on June 1st, 2023, fully two and a half years ago.  From that date on, from that date forward, June 1st, 2023, certificate authorities would only issue code signing certificates in hardware.  And, critically, this applied not only to extended validation code signing certs, which had long been required to reside in hardware isolation, but to all code, even of lesser-verified code signing certificates.
+
+So that move, made two and a half years ago, ended the opportunity for code signing certs to be remotely stolen.  I remember years ago, Leo, like a decade ago, more than, we talked about a theft somewhere, I don't know, like in Taiwan, or there was a theft of a physical facility where their certificates got stolen.  Or maybe it was a remote break-in.
+
+LEO:  Do they have them on a piece of paper in a safe?  How could you - I don't...
+
+STEVE:  Yeah.  So but for the last two and a half years, all code signing certs of any caliber had to be installed in hardware.  So there was, as a consequence of that, it meant that no code signing certificate could be exfiltrated by any remote attacker.  Period.  Even the owner of the dongle, the HSM, can't get the private key.  There's no API.  You can't extract it.  It is a write-only system by design.  Nevertheless, the certificate authorities have voted and decided that even safely stored code signing certificates must be renewed now much more frequently.
+
+LEO:  So I understand why this happened with TLS certificates because of issues with revocation.
+
+STEVE:  Right.
+
+LEO:  There's nothing like that for code certificates; right?
+
+STEVE:  No, no.  You could, you know - so, and this is another part of the annoyance.  It's not as if this is actually going to prevent maliciously signed malware.  You're going to get companies posing as reputable software publishers who obtain a code signing certificate and establish a reputation, very much the same way that people who run forums see people creating accounts that are dormant for a while in order to sort of slip under the radar, and then they start getting up to some mischief downstream at some point.  Same thing's happening here.  So it's not like this actually solves a problem.  You could still have valid code-signing certificates issued to malicious parties because the validation process cannot be perfect because, again, it's the human factor, which is where all of our security ultimately fails, whether it's humans writing code that has bugs or humans saying, you know, are you really, you know, Steve Gibson?
+
+So this raises the question; right?  Why would the CA/Browser Forum feel the need to reduce the life of absolutely theft-proof code signing certificates.  What benefit could there possibly be to them?  And does this have an impact upon the browser side?  Remember, the CA/Browser Forum is the certificate authority and browser forum.  Does this have any effect on the browser side?  Looking over the results of the ballot measure which was voted on, CSC-31, which was titled "Maximum Validity Reduction."  I was struck by the mix of voters, and using the term "mix" would be technically inaccurate since all 10 of the yes votes came from certificate issuers.  Subsequently updating myself...
+
+LEO:  That's not a conflict of interest at all; is it.
+
+STEVE:  Oh, it gets better, Leo.  It's exactly this.  What we have forming is a cabal.  While updating myself about what's been going on and poking around the industry, I stumbled upon an interesting tidbit that pretty much explained what's happening.  The light bulb lit for me.  There's been a recent significant increase in cloud-based code signing.  In other words, the push for shorter and less convenient use of the super-secure hardware security modules by shortening the maximum life of the certificates they can contain and store, while providing no automation for their management.  That has the indirect effect of actively discouraging code signers from obtaining and managing their own code signing certificates.  It appears to be that the future of code signing will be the establishment of a subscription relationship.
+
+LEO:  Oh, my god.
+
+STEVE:  Yes.
+
+LEO:  You're right, it does get worse.
+
+STEVE:  It does get worse.  It will be the establishment of a subscription relationship with a major provider such as GlobalSign or DigiCert.  Remember that what code signing actually signs is a cryptographically secure hash of some code. This makes it entirely feasible for that process to be "remoted" with a cloud-based service.  A cloud-based code signing utility takes a cryptographic hash of the code to be signed and forwards it to the signing provider's cloud service.  After verification and validation of the identity of the signing party - and note, Leo, this is the glitch here because they still have to, the cloud provider needs to verify the person asking for this to be signed is who they say they are.
+
+Well, have we ever seen authentication fail?  Uh-huh.  Once that's done, though, after first verifying that of course their subscription is in good standing, and they're all paid up, the cloud signing provider uses the customer's own private key - which the provider maintains for them and their customer never receives or sees...
+
+LEO:  Why would you want your own private key, after all.  We'll keep it for you.
+
+STEVE:  That's right.  Oh, trust us.  Exactly, that's right, we'll keep it for you.
+
+LEO:  Oh my god.
+
+STEVE:  They sign the hash of their code for them.  The signed hash is then returned to the customer, whereupon the cloud-signing utility affixes it to the end of their code to complete the signing process.
+
+So taken in aggregate, what has happened, and this is deeply disturbing, is that to an ever increasing degree, all code from anyone and anywhere is inherently mistrusted by default, will probably only run on Linux, unless it has been signed by one of a diminishing number of increasingly large select few signers who are pretty much free to then charge whatever they wish for the privilege.
+
+LEO:  This is enshittification exactly.
+
+STEVE:  Yes, it is.  Yes, that is exactly what it is.  What has slowly been growing and evolving is a cabal.  We've been witnessing a consolidation of certificate authorities over the past decade as the bigger fish swallowed up the littler fish while also, not surprisingly, raising their rates.  Today, the least expensive code signing certificate I could locate was IdenTrust's at $270 per year; but purchasing a three-year certificate offers a 20% discount, so that's $647 for three years.  They'd like to get your money upfront, if they can.  GlobalSign is just over twice as expensive per year at $550, with no multi-year discount.  And DigiCert leads the pack at $840 per year.  Think about that for a second.  $840 per year.
+
+LEO:  Unbelievable.
+
+STEVE:  For no reason other than because they can.  And because we are not - we, code authors everywhere - will have no recourse.  No choice.
+
+LEO:  And this really impacts you because you're not running your software on Linux.  You're running it on Windows.  So this will be a requirement; right?
+
+STEVE:  Yes.  And my stuff will not run unless it is signed.  I made a mistake over the holidays because I've been producing incremental updates of the DNS Benchmark.  I'm going to have a really neat surprise for all DNS Benchmark people in another couple weeks.  But I dropped an unsigned copy on VirusTotal; and, oh, it lit up like a Christmas tree in red.  And I thought, what the heck?  And then I thought, oh, thank goodness, it's just because I forgot to sign it.  I signed it.  Zero out of 73 or 72 AV tools thought there was a problem.  Unsigned, not a chance.  And then of course we have that new, the SAC, the Smart App Control in Windows 11, that doesn't allow an exception.  We've stumbled on that a couple times.  The good news is you try a couple hours later, and then it works.  So it's, you know, okay.
+
+Anyway, so the upshot is all of the commercial platforms now require code to be signed, and a very small and shrinking group of increasingly powerful commercial authorities have decided to follow the TLS model of continually shortening the lifetime of those code signing certificates, which they alone are empowered to issue.  Today's code must be signed.  Even the Notepad++ guy, he's now got a GlobalSign certificate.  He had to buy one because he had no choice.  Today's code must be signed.  So code authors have no recourse other than to pay an annual tribute to the certificate gods in order to qualify for the privilege.
+
+It's against this backdrop that the certificate authorities all voted to take two full years off of the maximum code signing certificate lifetime that we have today, reducing it by 24 months from 39 months to 15.  Why?  Because they can.  They all voted for it.  Because there's no one to stop them.  Certificates that have been locked up in hardware are not subject to remote attacker theft.  Period.  And we know where this is headed; right?  We've seen this play out already with the web server TLS certificates.  We've watched as TLS certificate lifetimes gradually dropped from their original lifetime of 10 years and are now headed down to 47 days a few years from now.
+
+With certificates expiring more often than every 7 weeks, as they will be, automation becomes the only practical solution - despite all of the many inconveniences it incurs in situations where the use of the ACME protocol is not practical.  And there's, I mean, it's creating lots of problems for people.
+
+And so the same thing is clearly happening with code signing.  Once the various certificate authorities get the infrastructure in place to support cloud-based code signing, that'll be the only practical way code can be signed.  Maximum code signing certificate life was just reduced for no reason, effective this coming March 1st.  Does anyone imagine that will be the end of it?  In the future, it will be necessary for anyone who wishes to produce software for general use that any platform will accept - except Linux, which will be the haven, essentially - they will need to obtain and maintain an account with a cloud-based code signer.
+
+LEO:  What happens when you write your own code?  You can run your own code on your Windows box.
+
+STEVE:  No.  No.  I can't.
+
+LEO:  What?
+
+STEVE:  The only way I could do it was by whitelisting the entire ASM tree on my system.  When I set up a new system, and I forget to do that, the code I assemble and link into an EXE is immediately deleted from the hard drive.
+
+LEO:  Oh, my god.  That's awful.
+
+STEVE:  That's the world we're in now.
+
+LEO:  Now, you can't disable this feature; right?
+
+STEVE:  Under Windows 10 I can.  Windows 11 is coming with this new SAC, the Smart App Control.  It cannot be turned off.  If it's turned off - and you can force it off.  You can then never turn it on again because Windows, Microsoft has decided that, oh, well, if you're going to turn it off, we're not going to let you turn it on.  You have to reinstall Windows 11 to turn it on.
+
+LEO:  Oh, right, I remember that, yup.  Yeah, yeah.
+
+STEVE:  So, I mean, think of it, Leo.  I mean, basically all of this original PC hobby control, which you could argue built this industry, is going commercial and is being taken away from us.  
+
+LEO:  And this isn't really the spirit of personal computing, if you ask me.
+
+STEVE:  No.
+
+LEO:  If you can't write your own software, it's not your computer.
+
+STEVE:  Right.  Right.  So I don't know when this is going to happen.  It'll be gradual over time, that is, the shortening of code signing certs.  But watch it.  It happened.  Just like it was with TLS certs.  And we have a model for that today.  No one needs to wait.  DigiCert is ready today.  For only $1104 per year...
+
+LEO:  What?
+
+STEVE:  $1104 per year.
+
+LEO:  It's a hundred bucks a month.
+
+STEVE:  ...they'll be glad - but wait, there's more.  They'll be glad to sign your code in the cloud.  But there is one limit, Leo, a glitch.  They limit it to 1,000 signatures per year.  I'm not kidding.  Unlike the past world where, after obtaining a code signing certificate, we were free to exercise our right to sign as much code as we like, once code signing has evolved into a disservice, the provider will hold not only our private key, but all the cards.  And with ever-fewer certificate authorities, we can expect this to continue increasing in cost.
+
+LEO:  Whew.
+
+STEVE:  I know.  So now there's not only do you have to pay a $1000 a year, or $1100 a year, but there's a limit on how much you can sign because now it's a service, and they can.
+
+LEO:  But, okay, that's like 1100, a thousand different programs.  Not the same program a thousand times.
+
+STEVE:  Well, yeah, you would never - but, for example, right now, I've been producing incremental builds.
+
+LEO:  Oh, every version is a different program.
+
+STEVE:  Yes.  Yeah, we're at Release 85, all of them signed because all of the people testing have to have a signed executable, or their Windows won't run it.
+
+LEO:  So you could easily hit that limit even with just one packet, one software.
+
+STEVE:  Yeah.
+
+LEO:  Wow.
+
+STEVE:  So for what it's worth, anyone who's been signing their own code, who may be getting ready maybe to make that jump, might wish to grab a 39-month code signing certificate, that is to say, three years and three months, while you still can, prior to March 1st.  You'll be able to obtain an additional two years of hassle-free, cloud-free, and also unlimited, no one's counting your signings, code signing.  And frankly, thanks to our listeners' generous purchases of SpinRite and our new DNS Benchmark - all of which is signed - I can afford to take my own advice, and I plan to do so.
+
+I will be refreshing my code signing certificate before March 1st so that I can get 39 months and push off for another three years and three months whatever happens next.  You know, and that means that I won't need to continue to keep continually updating a hardware security module.  You know, while that's not a big problem, it should not be necessary.  There's no big problem that's being solved by shortening the lifetime of any certificate that's stored in hardware.  So forcing this upon the world appears to be about nothing but profit and control.  Because they can.
+
+I'm sure our listeners are also aware that none of our real-world experience suggests that the use of, as I said before, a remote third-party cloud-based signing system would actually be more secure than simply signing with the use of a local physical dongle that can remain offline unplugged, you know, until it's needed.  Earlier, I glossed over the fact that the remote cloud-signing service would need to be certain that the certificate's owner is the one requesting that some code be given their signature.  I don't know that I want my private code signing key  held in the cloud by a third-party.
+
+LEO:  No.
+
+STEVE:  How is that more safe for me?
+
+LEO:  It's less safe.  What if they have a breach?
+
+STEVE:  Yes, exactly.
+
+LEO:  And it's not like that's not ever happened.
+
+STEVE:  Exactly.  And before we leave the topic of certificate lifetimes, I'll remind everyone of the upcoming March 15th deadline which is also approaching.  That's when maximum TLS certificate lifetimes will be cut in half, from around 398 days to just 200 days.  So anyone who may need to be managing TLS certificates manually, and as I said there are many such use cases, updating close to, but before, this upcoming March 15th deadline will allow you to defer the need to find some better solution for another 13 months, before it gets cut in half.  So Leo, we are in a different world.  And as I said, this is just - it feels so usury.  Nothing costs them a thousand dollars for an automated service.  Nothing.  It used to be, what, $45 for a code signing cert.  You know...
+
+LEO:  It's pure greed.
+
+STEVE:  It is.  And we have no control.  I mean, there's nothing you could do.  Someone suggested I - there was some dialogue of this in the GRC newsgroups, and someone suggested, well, what about - in fact, he was an author of freeware or charityware, I think it supported - it was some application that supported the members of his church.  And he said:  "I can't afford hundreds of dollars every year to have a code signing certificate."  He said:  "I mean, I can't."  But of course his members are all using Windows because that's the most common desktop platform still.  So what does he do?  
+
+LEO:  And you can't tell your potential customers, oh, just disable security on your system, and then you'll be able to - you can't say that.  That's so...
+
+STEVE:  No, you can't.  No.  And Microsoft has made it one way.  It used to be under Windows 10 with Defender that it would quarantine, and you could go in and click a few, you know, drill down and say no, trust this, or...
+
+LEO:  That's how it is on the Mac right now.  But not probably for very much longer, I would imagine.
+
+STEVE:  Yes.  And it's gone.  It has disappeared from Windows 11.  They said no.
+
+LEO:  All in the name of security.
+
+STEVE:  But we know better.
+
+LEO:  But it's not more secure.
+
+STEVE:  And that's just it, Leo.  It's not.  And this is, as I said at the top of the show, it feels to me like because we can, we can use our fancy technology to do these things, you know, I mean, it's like the UK saying, well, we want decryption of messaging because we know you geniuses can figure out how, and you'll make it safe, and you'll just do it because we're going to pass a law that says you have to.
+
+LEO:  Just nerd harder.  That's what Cory Doctorow says.  "Nerd  harder."  You're not nerding hard enough.
+
+STEVE:  You're right.
+
+LEO:  Is it possible, Steve, for somebody to do what Let's Encrypt has done and make an open source code signing, like free code signing...
+
+STEVE:  Windows would have to decide to trust certificates...
+
+LEO:  Microsoft would have to support it, yeah.
+
+STEVE:  Yes.  Yeah.  Microsoft and...
+
+LEO:  And Android.
+
+STEVE:  And Android.
+
+LEO:  Google and Apple and everybody, yeah.
+
+STEVE:  And they would say that - and so there is a difference in the model, though.  Let's Encrypt verifies your control of the domain.  The only thing that TLS certificate is doing now is giving you encryption.  That's why it's called Let's Encrypt.  It's not saying who owns the domain, it's saying whoever owns it can have a certificate to encrypt it.  That's where this is different.  Code signing certs say this person owns, you know, this person or company owns, you know, is the producer of the software.  So there is some work that they have to do in order to say, okay, you know, you're who you are.  But and so it's not automatable in the same way.  If it were, then malware would all do it.
+
+So malware has to go to some lengths to fraudulently obtain a code signing certificate.  But, you know, they will.  And they will then use it like crazy until it becomes blacklisted, and then they'll get another one, or pull another one out of their queue of previously acquired, maliciously obtained certificates.  But it feels to me like all of the legitimate use cases for unsigned software are being killed in the name of trying to pursue, forcing everything to be signed even though that signed code will still have bugs.  It's not like the bugs disappear because you have a signature.  It's just saying we know who signed this.  It's like, it's creating a big barrier that doesn't actually improve security.
+
+And it's not like, when are we talking about maliciously signed EXEs on this podcast?  We talk about everything that happens.  That isn't a problem.  It's like certificates being stolen from websites.  It's easy to say, oh, they could have their certificates stolen.  Well, that doesn't solve the problem.  You still need to route traffic, you need to maliciously route traffic to a domain name to a bad server.  So even stealing a certificate isn't the end of the world.  You've got to somehow arrange for that domain to map to an IP which is malicious which also has that certificate.  So we're doing all these things that really create serious inconvenience for very, very, very little gain.  Again, why?  Because they can.
+
+And I was reminded of something I said on this podcast earlier.  I should be, I as the owner of GRC, should have the ability to say my security model is fine with a TLS certificate that has a five-year life, or 10-year life.  I.  If Microsoft or Amazon or eBay want to have 47-day or four-day continually renewing certificates, great.  Let them have them.  Why force the world down to this lowest common denominator?  
+
+LEO:  That doesn't improve security.  It doesn't...
+
+STEVE:  Yes.
+
+LEO:  And it just gets in the way of people who want to own their own computer, own their own system.  I mean, I understand we've got a situation where we've got malware and bad guys rampant.  But this is not the way to stop that.
+
+STEVE:  Yeah, we have a guy in the newsgroups, first name is Allen, who wants to run his own email server.  Well, email has to be TLS.  But email isn't a web server that can accept an ACME challenge.
+
+LEO:  Oh, can't automate it.
+
+STEVE:  No.  And so, you know, it's like he's going through all this, too.  And it's just diminishing returns.
+
+LEO:  Yeah, well, it's good for Linux.
+
+STEVE:  Actually, Linux is beginning to look mighty fine.  And I did find myself wondering, although this isn't a solution for everybody, whether WINE cares about signatures.  I don't think it does.
+
+LEO:  I'm sure it doesn't.  No, because it's...
+
+STEVE:  There's no enforcement mechanism.
+
+LEO:  Because it's not running Microsoft Windows.  It's emulating it.
+
+STEVE:  Right.
+
+LEO:  Not even emulating it, it's...
+
+STEVE:  So you don't have Defender sitting around, stomping out things before they have a chance to see the light of day.
+
+LEO:  Interesting.  And WINE runs a lot, I mean, look, Windows compatibility on Linux has gotten very good, partly because of gaming.
+
+STEVE:  Yeah, yeah.
+
+LEO:  And WINE has done a great job.  I mean, you can pretty much run anything now.
+
+STEVE:  Yeah, I've learned a lot in the last few weeks after releasing the DNS Benchmark because so many people want to run it on Linux.  And there are a bunch of like commercialized WINE packages.
+
+LEO:  Yeah.
+
+STEVE:  So the WINE license allows commercial reuse of all of that good work.  And they, like, round off the rest of the rough edges and, you know, and create more of a drop-in solution.
+
+LEO:  Yeah, it's a business model, yeah.
+
+STEVE:  Yeah.  But I can't tell everyone go get Linux and then run my software.  So...
+
+LEO:  This is the problem.  And if you're a business, you're going to be running Windows.  If you're a church, you're going to have to support parishioners that run Windows.  You just have to.  They're so dominant.  Now, somebody's pointing out, well, I guess you could install a local certificate.  If you're a business you could install a local certificate on all the business's computers so you could run your line of business software that you wrote without signing.  Or you would sign it.  You'd sign it with that personal certificate as opposed to a public certificate.  Right?  You just add it to the certificate store.  Say yes, this is trusted.
+
+STEVE:  Yes, yes, yeah.
+
+LEO:  But that's not a solution except in that environment where you control every computer in that environment.
+
+STEVE:  Well, yeah, try telling people who come to your website, here, install my own CA certificate in your root.
+
+LEO:  That must be what happens, I mean, my Synology NAS does not have a certificate.  First time I go there in my browser it says, you sure, you sure?  It still lets me get through.  And once I say yes, I never have to see that again.  So it must be installing a certificate at that point.
+
+STEVE:  Well, no.  It still sees that there's a problem.  It just put in an exception.  It whitelisted...
+
+LEO:  Right, just said okay.
+
+STEVE:  It whitelisted that, yeah.
+
+LEO:  Yeah.  You want to take a break and recover?
+
+STEVE:  Oh, boy, do I.
+
+LEO:  I really, for a variety of reasons, I'm becoming more and more disenchanted with big tech, big operating systems.  And I really feel like, I've always felt strongly that open source is the right solution.  But more and more I don't want to participate in these big tech things.  I want to run my own AI locally.  I want to run it on a Linux box.  You know, I want to do my own thing.  But that's a very - most people cannot do that.  It's just it's a privileged position to be in to say you can do that.  Oh, well.  All right.  But we'll have more in just a bit.  Steve Gibson, he's going to have a little coffee.  He'll feel better.  I hope you do, too.  Anyway, back to the show.
+
+STEVE:  Okay.  Soooooo.  Oh.
+
+LEO:  No, come on.  More bad stuff?
+
+STEVE:  Yeah.  We were talking not long ago about the sad idea that ChatGPT's clean "answers only" dialog might become laden with advertising.  Now, anyone who was around during the birth of "The Google" will fondly recall that original, super-clean, no-nonsense Google search results.  I mean, it was so nice.  Well, those days died once Google realized how much money could be made through advertising.
+
+LEO:  Yeah, yeah.
+
+STEVE:  One of the observations I can't help making is that AI is currently a money-losing enterprise with high hopes for the future.  But it's astonishingly expensive at the moment.  And that's worrisome because I, like many others I'm sure, and I know you, Leo, have now figured out what our current AI is, and how to leverage its benefits for our lives.
+
+LEO:  Oh my god, it's amazing.  Oh my god.
+
+STEVE:  I don't ever want to lose access to it.
+
+LEO:  No.
+
+STEVE:  It is really phenomenal.  It is amazing.
+
+LEO:  I'm afraid because I use Claude code now for everything, for configuration, for setup, anything.  You know, I was saying, oh, my laptop buttons don't turn the screen up and down.  How do you fix that?  And Claude code fixed it.
+
+STEVE:  I know.
+
+LEO:  I used to have to go look, you know, go to Reddit, do all these things.  It just knows.  It goes, yeah, I'll fix that.  If I lose that, I don't know what I'm going to do.
+
+STEVE:  I feel a little guilty sometimes asking it dumb, like obvious things just because I'm lazy.  But it's like, well, there's the answer.  So...
+
+LEO:  And you know it's not judging you.
+
+STEVE:  And Leo, I do despair a little bit about young ones who grow up with an AI always there.  I mean, you've got an Oracle on your elbow that just, like, why, you know, you're going to end up just learning how to steer it, rather than, you know...
+
+LEO:  Steve, remember we used to have to, if you wanted to know, like, who starred in that movie in 1939, you'd have to go to the library and look it up.  But now you've got all that in your phone.  And we're all used to it.  People don't have to research stuff anymore.  This is just the next step along that route.
+
+STEVE:  We had to learn, we had to know what eight times eight was, Leo.
+
+LEO:  Yes.  We had to learn the multiplication...
+
+STEVE:  That will no longer be needed.
+
+LEO:  I'm sure when people first got calculators they said, oh, kids will never learn the math tables anymore.  Which is probably true.  You know, we had a story on Sunday on TWiT.  They took away the cell phones in New York City schools, and it's been a problem because high schoolers can't read analog clocks.  So they keep asking, hey, what time is it?  They keep asking the teacher, what time is it?  And the teacher said, I'm at the point now where I'm saying, well, where's the big hand?  Where's the little hand?  So this is just the way of the world.
+
+STEVE:  Yeah.
+
+LEO:  I don't know how to shoe a horse.
+
+STEVE:  If you asked, lined up a bunch of high school seniors and said, okay, do some long division, they'd say, what?
+
+LEO:  What?  How do you do that?
+
+STEVE:  What?
+
+LEO:  Can I use Claude code?
+
+STEVE:  Yeah.  So a couple of days after Christmas, Tom's Hardware posted reporting along these lines which I wanted to share because it contains a bunch of additional interesting detail, as well.  Tom's Hardware's headline was "ChatGPT could prioritize sponsored content as part of ad strategy."  Now, unfortunately, having the phrase "ad strategy" affiliated with AI, that's sad.  But they open by posing the rhetorical question "Are we going to see ads in ChatGPT's answers soon?"
+
+And they explained, writing:  "OpenAI is allegedly still working on adding ads to ChatGPT, with sources saying staff are discussing ways to bake them into the chatbot's responses.  According to The Information, the AI company is looking to create a new type of digital ad rather than simply copying what existing search and social media companies are running."  Well, okay, maybe there's a little bit of hope.  "This is possible because OpenAI can use historical chat data to serve ads that are highly relevant to users' interests."
+
+Okay, now, I'm going to interrupt here just to note that it's difficult to argue with that; right?  I mentioned that many of us have come to understand what's going on with LLMs, and we understand that one of the things we've come to learn and appreciate is the "context window" that an account holder builds over time.  I remember being taken aback the first time ChatGPT offered some example code to me in Intel assembly language.  I was like, what?  How does it know?  I was quite certain that, you know, it wasn't what it would have offered most users.  But I've come to appreciate the degree to which it's able to tune its replies based on our dialogue's history.
+
+So, you know, this is not to say that it's going to have any advertisers in its bag that will necessarily match up with my particular interests.  That's going to be a problem; right?  It's got to have somebody to offer to me.  But, you know, I certainly understand the notion of an AI that's been working with someone for a while being unusually well suited to matching them with relevant advertisers.  That idea, I think, has clear merit.  And we know from our previous study of advertising, tracking, and profiling that much more accurate matching means much more revenue for every highly targeted ad.
+
+Anyway, Tom's continues, writing:  "OpenAI told The Information:  'As ChatGPT becomes more capable and widely used, we're looking at ways to continue offering more intelligence to everyone.  As part of this, we're exploring what ads our product could look like.  People have a trusted relationship with ChatGPT, and any approach would be designed to respect that trust.'"  Okay.  Let's hope.  Anyway, Tom's Hardware wrote:  "Staff discussions on ad implementations have ranged from prioritizing sponsored content in the chatbot's answers to adding a sidebar that shows ads related to the user's query.  They've also considered showing them only when the conversation moves toward shopping or similar activities, or as a secondary step where ads are displayed only when someone clicks a link in ChatGPT's results.
+
+"It's been reported that OpenAI is shifting its focus away from ads, especially after CEO Sam Altman declared a 'Code Red' for the company following the latest version of Google's Gemini, which outpaced ChatGPT in several benchmarks.  Altman said that OpenAI needed to improve the AI chatbot's personalization, speed, and reliability, and cover a broader range of topics; so the company is pausing work on all other projects to focus on these capabilities.  However, it seems to be continuing progress on ChatGPT ads, despite the recent change in focus.
+
+"ChatGPT has three main revenue streams at the moment  subscriptions to ChatGPT Plus, Pro, and Business; API access for developers; and enterprise solutions.  Aside from that," writes Tom's, "OpenAI said it will start earning revenue from non-paying users by 2026, projecting $2 per user per year, which will grow to $15 per user per year by 2030.  Despite that, OpenAI has yet to turn a profit since its founding in 2015.  Even though its annualized revenue hit $10 billion earlier this year, it's still expected that the company's operating losses will hit $74 billion annually by 2028.  Nevertheless, investors continue to pour money into the company, even as some are starting to ask how its long-term profitability will look.
+
+"For comparison," they finish, "Google's ad business accounted for $237.8 billion in revenue in 2023, representing 77% of the company's total revenue.  This amount is more than enough to cover OpenAI's estimated losses, and it seems it wants to follow the search giant's playbook by baking ads into its results, as well.  However, this also raises privacy concerns, especially since ChatGPT likely has much more information about its users than Google does.  Furthermore, there's the question of how OpenAI will ensure its LLM gives the best answer to the user, especially if it stands to make money by showing ads instead of organic results."  And to that I will say, oh, boy.  Nobody wants a skewed reply from an AI that's trying to lead its user down one commercial path because of a hidden kickback that the AI receives.  So Leo, what do you think about ads in AI?
+
+LEO:  Well, it's all in how you do it; right?  I mean, the worst thing of course would be, as you say, if you included the ads in the results.
+
+STEVE:  Response, yes.
+
+LEO:  And it's not clear that it's not an ad.  I mean, look.  We have ads.  And I think - that's how we support ourselves.  I think ads are okay as long as they're clearly identified.  Advertisers, of course, always want you to somehow hide the fact that that's an ad.  They love that.
+
+STEVE:  One of the things about - there's a great publication called The Hacker News.
+
+LEO:  I love it, yeah.
+
+STEVE:  And in the last couple of years, they began slipping in interstitial, like, paid for insertions that looked...
+
+LEO:  Yeah, that's not good.
+
+STEVE:  That were made, you know, there was no way to look at them and know that's what it was.
+
+LEO:  Yeah.
+
+STEVE:  And you had to read a little ways in, and then you go, oh, wait a minute.  And it's sad.  But I get it.
+
+LEO:  Yeah, I call that advertorial, or sometimes if they don't want the word "ad" in there they'll call it, what was it, something content, custom content or something.  It's not okay.  And we don't do it.  And your AI should not do it, either.  But if it's a little thing on - and, you know, I understand why they're saying "shopping" because if you go to an AI, and you say I want to buy running shoes, and they put a link to a place to buy running shoes, and it says "ad," I think that could even be helpful; right?
+
+STEVE:  Yeah.  Yeah.  I know that Lorrie and I are sharing an account, which makes me a little uncomfortable because I wonder if ChatGPT...
+
+LEO:  It's confusing them.
+
+STEVE:  If ChatGPT thinks we have a split personality, yeah.  But I look at the dialog history.  And, I mean, she's using it for all kinds of things which are definitely...
+
+LEO:  It's the new search.
+
+STEVE:  Which are definitely commercial frontend.  So, you know, she's asking it, like, give her a table of - you know, we're in the process of getting ready to set up a new household.  So there's like all these things.
+
+LEO:  Lot of shopping.
+
+STEVE:  Exactly.  So I can...
+
+LEO:  I mean, we're going to have to pay for it one way or the other, eventually.
+
+STEVE:  Yes.  And I'm glad you said that because it did say in Tom's reporting that non-paid users would be generating ad revenue.  I would, you know, I find ads abhorrent.  You know, there's not an ad on GRC.  I could have ads on GRC, and we'd be  making money from all of the page views we get.  There's not an ad there because, you know, I practice what I preach.  And so I wouldn't have a problem paying more than, what is it, 20 bucks a month or something that I'm paying for my Plus?
+
+LEO:  It's 20, yeah.
+
+STEVE:  I mean, I'll pay 50 for what I'm getting.  You know?
+
+LEO:  It's really worth it.
+
+STEVE:  And by the way, I did see my little $10 from Bitwarden.  I got my little receipt at the beginning of the year.
+
+LEO:  Oh, good.  Oh, good, yeah.  I like paying for Bitwarden.  That makes me feel good.
+
+STEVE:  So we do pay, you know, we pay for the things that make sense.  But...
+
+LEO:  That's what we have to get used to is that this whole idea, this feeling things are free has always been not true.  And you've got to pay for the stuff you use.  You just do.  And that's just the way it is.  It shouldn't - it's not free.  It can't be free.
+
+STEVE:  Well, and the ad revenue model has shown that it works.  As you said, that's why TWiT is still here.  And I'm here indirectly because TWiT is still here.
+
+LEO:  Right.
+
+STEVE:  It's what broadcast TV survived on.
+
+LEO:  Right.
+
+STEVE:  And the problem is it can be a slippery slope, right, because if you have some number of ads in your TV show, there's just so much temptation to squeeze another one in because, you know, at the expense of content.  It's like, you know...
+
+LEO:  Don't.  Just don't.  Okay?  Stop.
+
+STEVE:  So anyway, it's going to be interesting.  But again, I think this needs to get paid for.  I'm reminded of your comment that the cost that OpenAI is expending is in training, not in querying.  So I'm hoping that, you know...
+
+LEO:  It's getting cheaper, for sure.
+
+STEVE:  Yes.  Because, I mean, generating 10 billion and losing 74, that's not the future.
+
+LEO:  No.  In fact, at CES NVIDIA announced chips that are considerably more powerful at a lower price.  So you're going to see this.
+
+STEVE:  And this is why I think it is so stupid to be building up data centers and, like, using your GPU inventory as the asset against the loan that you took out, because you have rapidly depreciating inventory.
+
+LEO:  Right.
+
+STEVE:  Oh, that's nutso.
+
+LEO:  This is going to be an interesting year.  I think that's probably the best way to think of it.
+
+STEVE:  We went a long time to our first break.  Let's take one now, and that'll kind of put us back on track.
+
+LEO:  Okay.  Yeah.  Gladly.  And in fact...
+
+STEVE:  And talk about Python Package Index's increase in security.  So there's finally some good news.
+
+LEO:  Oh, I've been waiting.  Come on, news.
+
+STEVE:  On the Python Package Index (PyPI) repository front.  PyPI posted in their "PyPI in 2025:  A Year in Review," they said:  "As 2025 comes to a close, it's time to look back at another busy year for the Python Package Index.  This year, we've focused on delivering critical security enhancements, rolling out powerful new features for organizations, improving the overall user experience for the millions of developers who rely on PyPI every day, and responding to a number of security incidents with transparency.  Let's look at some numbers that illustrate the sheer scale of PyPI in 2025."  And I put them in the show notes because they're, like, wow.
+
+Wow.  So more than 3.9 million new files published during just that year, 2025, last year, 3.9 million new files.  More than 130,000 new projects created.  130,000 new projects.  1.92 exabytes of total data transferred.  I even know what that is.
+
+LEO:  It's a big number.
+
+STEVE:  Gigawatts.  It's Gigawatts.
+
+LEO:  It's many, many, many, many bytes.
+
+STEVE:  2.56 trillion total requests served, which is an average of 81,000 requests per second.  So think about that.  81,000 every single second of the day.  81,000 pulls from the package repository.  So that really does give some sense for the scope and scale of today's repositories.  And PyPI's not even the big one.  NPM is the biggie on the block.  So it becomes, you know, very clear how rapidly, and here's on the security front, how rapidly a popular package, if its developer's account were to become compromised, would have the ability to spread.  I recall when the notion of a supply chain attack was a new term for us, and a new concept on this podcast.  Oh, supply chain, that's interesting.  Let's talk.  What's that?  Now, sadly, it's become one of the most prevalent and worrisome security classes that there is.
+
+Their posting noted:  "These numbers are a testament to the continued growth and vibrancy of the Python community."  Then they said:  "Let's dive into some of the key improvements we've made to PyPI this year."  And I'm just going to do the top lead one, which is security.  They said:  "Security First, Security Always:  Security is our top priority, and in 2025 we've shipped a number of features to make PyPI more secure than ever.  Enhanced Two-Factor Authentication for Phishing Resistance."
+
+They said:  "We've made significant improvements to our two-factor authentication implementation, starting with email verification for TOTP-based logins.  This adds an extra layer of security to your account by requiring you to confirm your login from a trusted device, when using a phishable two-factor authentication method like TOTP."  And I'm going to come back to this in a minute.  They said:  "Since rolling out these changes, we've seen more than 52% of active users with non-phishable 2FA enabled."  Okay.  So wait a minute.  What we see on this podcast over its 20-plus years is evolution.  Recall when the concept of a continually-changing six-digit code was going to be the "end all be all" of security?  Remember the little eBay football, what PayPal or whatever, you know...
+
+LEO:  Oh, yeah, the PayPal football, yeah.
+
+STEVE:  The football.  Oh, look at that, Leo, it changes its digits every 30 seconds.  No one's ever going to be able to hack that.  Okay.  It was exciting because, even if some site were to lose control of its static passwords, no bad guy would be able to produce the "one in a million" six-digit code that was correct for that moment, but changed every 30 seconds.  Well, that was a nice theory while it lasted.  But then reality struck.  We learned that practical applications of time-based one-time passwords actually needed to open a surprisingly large acceptance window for codes.  Remember that Microsoft's was like five minutes or something.  It's like, what the heck?  You'd just, you know, I mean, you could email it to somebody or almost postal mail it.
+
+Anyway, turns out they needed to accept many minutes' worth of code on either side of the optimal code in order to minimize false negative failures caused by desynchronized clocks, or communications delays, you know, or even maybe, you know, the users cutting and pasting or emailing themselves the codes, or who knows why.  But that was the reality.  But the real death knell sounded when the bad guys realized that those larger acceptance windows meant that users could be readily phished by having them attempt to log into a fraudulent website which they might get to by clicking on a link in email.  Which of course is able to obscure its actual domain.  They would provide their username and password and then be prompted for their one-time password.  The bad guys would collect all of that and log into their account on their behalf.
+
+And, you know, imagine then if that might be a corporate VPN they were logging into, or a remote access portal, or who knows what?  Maybe credentials for API access that would then be that the bad guy would then be able to acquire.  Much damage could result.
+
+So what the PyPI folks are saying is that, sure, by all means use two-factor authentication.  But so many of our past - and I'm putting words in their mouth - so many of our past PyPI package submitters' accounts have been hacked, even when they were "protected," in air quotes, by Time-Based One-Time Passcodes, that we are strongly now urging all developers to allow us to require that they also, on top of all that, respond to a link emailed to their account's registered email address.  The requirement of an email loop authentication slows down the whole login process, no doubt about it.  It's not as convenient.  But the demonstration of control over an email account remains a strong, useful, and intuitive authentication factor which displays every sign of being with us for many years to come.
+
+So it's great news that PyPI is actively working to strengthen their authentication.  And I hope everybody else follows suit because, as we know, accounts being taken over of legitimate high-reputation integrity software publishers and repositories that then get, you know, quickly have their stuff embedded with malware which is being downloaded at the pace of 81,000 pulls per second.  That's a problem we still have to solve.
+
+Shortly before Christmas, Microsoft's Windows IT Pro Blog posted the news that Windows 11 would be adding support for hardware encryption and decryption to their BitLocker whole-drive encryption system.  The chart of the relative performance of no BitLocker compared to software versus hardware crypto turns out to be quite bracing.  But let's first see what Microsoft explained. 
+
+They wrote:  "We know that users desire both security and great performance."  Right.  "Historically, we have strived to keep BitLocker performance overhead within single digit percentage points.  However, with the rapid rise in popularity and advancement of Non-Volatile Memory Express (NVMe) drive technology, these drives now achieve much higher Input/Output operation speeds.  As a result, corresponding BitLocker cryptographic operations" - this is Microsoft - "can require a higher proportion of CPU cycles.  This makes the performance impact of BitLocker more pronounced" - oh, Leo, I've got a picture for you on page 8 here - "especially on high-throughput and I/O intensive workloads like gaming or video editing."  Okay.
+
+LEO:  Wow, it does make a difference.  Holy cow.
+
+STEVE:  Oh, boy.  In other words, what they're saying is, and this makes sense, there's a fixed absolute overhead cost that's required to encrypt and later decrypt all of the blocks of data being written to and read back from non-volatile mass storage.  It's a function of the data size.  The cost is a fixed function of, okay, both processor speed and the amount of data being read and written.  Significantly, it is entirely independent of the storage medium being written to or read from.  Microsoft talks about the overhead as a percentage that's added to the time that would be required without BitLocker.  That's certainly a reasonable way to view the encryption overhead; right?  As in how much did this add to what it would have been otherwise.
+
+LEO:  Right.
+
+STEVE:  But then comes along these pesky, super-fast NVMe drives which are essentially PCIe devices themselves.  SATA drives used a SATA interface to a SATA controller, which was then attached to the processor's PCIe bus.  And SATA was never optimal for doing this, which is why you need a controller.  Basically it patches up the old IDE interface into a packetized system.  And of course I know all about that from having written a SATA driver myself for SpinRite 6.1.  But NVMe drives need no controller.  They are themselves first-party PCIe devices.  So they're able to stream their data at the highest speed possible directly to and from the rest of the system.
+
+What this means in practice is that someone inside Microsoft realized that the actual delivered performance of NVMe drives was now being dramatically limited by the fixed-speed overhead introduced by BitLocker.  The chart above-right in the show notes, which was kindly provided by Microsoft, demonstrates the significance of the encryption overhead.  The shortest center bar shows the average CPU cycles per IO operation.  That is to say, without any encryption.  The hugely tall orange bar is the average number of CPU cycles incurred by software BitLocker encryption.  Okay.  And for those who can't see it, it's quite sobering.  It stands about four times the height of the no encryption bar.  And finally, by comparison, the hardware-accelerated BitLocker only adds a modicum of additional overhead to the no-BitLocker transfer.
+
+So the very clear takeaway from this is that anyone who is currently using BitLocker on an NVMe drive without the benefit of Windows 11's forthcoming BitLocker hardware encryption, which is to say everyone today because it doesn't exist yet, is seeing only a true fraction of the performance they could be obtaining from that drive without the comparatively massive overhead that's being introduced by BitLocker.
+
+Now, somebody may be wondering about SpinRite.  I brought it up.  So I'll just mention that you get 100% full performance with SpinRite, regardless of whether BitLocker is present or not, because SpinRite 6.1 doesn't bother with BitLocker encryption and decryption.  It just works on the raw encrypted data.  But when you actually need to read, write, understand, and use the drive's data, as Windows does, then you have no choice other than to run through BitLocker's crypto pipeline.
+
+Since the performance with and without BitLocker, and with and without hardware acceleration is pretty astonishing, let's see what Microsoft has to tell us about this.  They continue, writing:  "As NVMe drives continue to evolve, their ability to deliver extremely fast data transfer rates has set new expectations for system responsiveness and application performance.  While this is a major benefit for users, it also means that any additional processing  such as real-time encryption and decryption by BitLocker  can become a bottleneck if not properly optimized.  For example, professionals working with large video files, developers compiling massive codebases, or gamers demanding the lowest possible latency may notice delays or increased CPU usage when BitLocker is enabled on these high-speed drives.
+
+"Balancing robust security with minimal performance impact is more challenging than ever.  The need to protect sensitive data remains critical, but users also expect their devices to operate at peak efficiency.  As a result, the industry has needed to innovate new solutions that ensure both security and speed are maintained, even as hardware capabilities advance.  To achieve this, we announced hardware-accelerated BitLocker at Microsoft Ignite last month.  Hardware-accelerated BitLocker is designed to provide the best combination of performance and security.
+
+"Starting with the September 2025 Windows update for Windows 11 24H2 and the release of Windows 11 25H2, in addition to existing support for UFS (Universal Flash Storage) Inline Crypto Engine technology, BitLocker will take advantage of upcoming" - and that's the key, upcoming - "system on a chip and central processing unit capabilities to achieve better performance and security for current and future NVMe drives."
+
+So they said:  "These capabilities are two.  First, crypto offloading.  BitLocker shifts bulk cryptographic operations from the main CPU to a dedicated crypto engine.  This capability frees up CPU resources for other tasks and helps improve both performance and battery life.  And second, hardware-protected keys.  BitLocker bulk encryption keys, when necessary SoC support is present, are hardware wrapped, which helps increase security by reducing their exposure to CPU and memory vulnerabilities.  This is in addition to the already supported Trusted Platform Module, which protects intermediate BitLocker keys, putting us on a path to completely eliminate BitLocker keys from the CPU and memory."  All that's great.  Unfortunately, we don't have it yet.
+
+They said:  "When enabling BitLocker, supported devices with NVMe drives, along with one of the new crypto offload capable SoCs, will use hardware-accelerated BitLocker with the XTS-AES-256 algorithm by default."  Which is what you want.  "This includes automatic device encryption, manual BitLocker enablement, policy-driven enablement, or script-based enablement with some exceptions.
+
+"We have enhanced the architecture and implementation of the Windows storage and security stacks to support these new capabilities as an operating system enhancement that will bring value to all capable PCs over time."  And here it is.  "Upcoming Intel vPro devices featuring Intel Core Ultra Series 3 (formally codenamed Panther Lake) processors will provide initial support for these capabilities" - meaning nobody can have it today, that is, on today's hardware - "with support for other vendors and platforms planned.  Coordinate with your suppliers and keep an eye on listings from us and other vendors as PCs become available on the market."
+
+Okay.  So all of this fancy new BitLocker crypto-engine pipeline support will only be available when using these next-generation Intel processors which, as it turns out, were just unveiled by Intel yesterday at CES, our annual Consumer Electronics Show.
+
+LEO:  And I'd just bought a laptop.
+
+STEVE:  Uh-huh.  This means - exactly, you and everybody else, Leo - that regardless of the version of Windows being used - 7, 8, 10 or even the latest 11 - on our current hardware, the use of BitLocker is exacting a tremendous, typically unseen, performance penalty that Microsoft is only now disclosing because they have a solution.  Of course it requires buying new hardware, but that seems to be what Microsoft wants to happen, thanks to, you know, Windows 11 needing new hardware, too.  But that solution is, you know, for tomorrow, not for today.
+
+I would say that if anyone has a BitLocker-encrypted NVMe drive which they encrypted out of the box just because "why not?" where their operating environment doesn't really require that the whole drive be encrypted, and where they'd rather receive a significant, apparently, so says Microsoft, boost in performance, it might be worth considering de-BitLockering any high-speed NVMe drives you might be using, reducing the load on your processor, improving the real-time performance of everything else because BitLocker's not hogging your CPU, and finally obtaining the true performance that's available from a state-of-the-art NVMe drive.
+
+Everything that Microsoft wrote about the increased overhead of fixed-speed encryption and decryption in light of the newer, faster performance of NVMe drives makes absolute sense.  What might also make absolute sense is waiting until your machine's hardware is able to support ultra-low overhead BitLocker encryption unless having it now is really necessary.  Microsoft ended their post by showing how anyone could check to see whether a BitLockered drive's encryption was hardware accelerated.
+
+They wrote:  "To check if your device is using hardware-accelerated BitLocker, open a command prompt as an administrator and run manage-bde" - that's BitLocker Drive Encryption - "so manage-bde -status.  Look at the Encryption Method section.  If 'Hardware accelerated' is shown, it indicates that BitLocker is utilizing the system-on-a-chip, SoC's crypto acceleration capabilities."
+
+So I've got it in the show notes, the bottom of page 10.  It's on the screen.  Thanks, Leo.  No one is going to see that today.  But this is a useful tip for the future when you're running Windows 11 on the newest hardware that may be able to offer this support, and that may be why you purchased the newer hardware.
+
+Many years ago, back when we were talking about and exploring whole-drive encryption with TrueCrypt, I clearly recall wondering about the performance overhead of using it.  So I did some benchmarking of a system's read and write performance with and without TrueCrypt.  I recall being surprised that I was unable to detect any performance overhead being introduced by its on-the-fly encryption and decryption.  All in software, of course.  And while I no longer recall the specifics, it's likely that the system I was using back then had a fast processor and a comparatively slower spinning hard drive.
+
+So as a consequence, the overhead that was being introduced by the encryption and decryption would have been completely masked by the drive's physical read/write performance because those two things were able to happen in parallel.  So that would have been, you know, the drive's read and write performance would have been the limiting factor.  It would have been slower than the system's ability to encrypt and decrypt its data.
+
+What's changed since then is that now we have not only solid-state mass storage as the new default, but that storage is being attached directly to the system's I/O busses with no controller translation going on in between, allowing today's mass storage to deliver unprecedented performance.  Software-based encryption and decryption cannot keep pace, even with, you know, doesn't matter how many cores you have.  One of the things that is happening is that pushing all that data and running decryption in software is flushing your processor cache.  So it is, I mean, it is really rough on the whole system to be, you know, doing bulk encryption and decryption by CPU.  You don't want to have to if you don't really need to.
+
+LEO:  See, I always turn on full-drive encryption, especially with SSDs, because as we've talked about before, you really cannot wipe an SSD very effectively; right?
+
+STEVE:  That's true.
+
+LEO:  So if I don't use encryption upfront, I'm probably storing stuff in the clear on that drive that can't be erased.
+
+STEVE:  I would say that you can't know that you have wiped an SSD.
+
+LEO:  Right.
+
+STEVE:  The secure erase should even deal with all of the little pockets of swapped out, you know, leveled regions and no longer effective chunks that have been mapped out of the SSD's use.  Secure erase should do that.  But you're trusting the manufacturer to, you know, to implement that correctly.  So, I mean, if you really are belt and suspenders, then yes, you would turn BitLocker on, you know...
+
+LEO:  I turn on full disk encryption on everything I have.  It's on by default on a Mac, File Vault.  On Linux I use LUKS.  And I think BitLocker's by default on Windows Pro.  I'm not sure about Windows Home.  But the point is, otherwise...
+
+STEVE:  It's not turned on by default on installation.  You would have to...
+
+LEO:  Okay.  It is on a Mac.  That's interesting that Microsoft doesn't do it.  Maybe that's why.  I would - I'm sure that there's a similar hit in full disk encryption on other systems.  But I don't know.
+
+STEVE:  Yeah.  After covering this I did not take any time to look around.  I'm sure people have done benchmarks...
+
+LEO:  Yeah.
+
+STEVE:  ...that are going to be available so we could see what that is.  There is a version of a drive that does it itself.  But they are extremely more expensive.  You know, they're like data center high-end drives.  They're, like, triple the price.  But it does, it has an AES encryption hardware.  Well, in fact, that's what the iPhone has.  You know, the iPhone storage is also all encrypted.
+
+LEO:  Oh, that's right.  Everything's encrypted, really.
+
+STEVE:  Yeah.
+
+LEO:  So maybe, you know, hey, we're not getting the full amount of speed that we could be getting, but it's still faster than your old spinning drive and that old processor, a lot; right?
+
+STEVE:  Yup.
+
+LEO:  I don't know, I think I'm going to always still use full disk encryption, just to...
+
+STEVE:  It'll be interesting to see what the overhead is.
+
+LEO:  What the hit is, yeah.
+
+STEVE:  Yeah.  I won't be turning it on because, you know, my environment doesn't really require it.
+
+LEO:  Right.
+
+STEVE:  Let's take a break, and then we're going to talk about, as you mentioned, Leo, the odd inclusion of two lines in the New York City recent mayoral inauguration, what is banned from being brought.
+
+LEO:  It's telling; isn't it.
+
+STEVE:  It's bizarre.
+
+LEO:  Yeah, yeah.  Okay, Steve.  Let's talk about the Raspberry Pi.
+
+STEVE:  Okay.  So last week, the newly elected and controversial mayor of New York City was inaugurated.  And that's not an event that would normally be mentioned here.  But this inauguration was a bit special.  I'm going to deliberately keep those who haven't already heard about this a little bit in suspense for just a minute because the reveal is just too much fun.  The reporting that I want to share over this is from a perfect perspective, and by someone who writes quite well.
+
+They wrote:  "Public safety rules should be dull in the best possible way.  Clear.  Predictable.  Written by people who understand what actually causes harm in a crowd of thousands. New York City usually gets this right.  It has decades of muscle memory for doing hard things in public, under pressure, without panicking.  Which is why the prohibited items list for the January 1st, 2026 NYC mayoral inauguration block party seemed off."
+
+Okay.  And at this point the post provided a link to the list of prohibited items, which I'm going to share with our listeners.  The notice read:  "Prohibited Items.  All spectators will be screened as they enter the viewing area.  The following items are prohibited:  Large bags, weapons, fireworks or explosives, large backpacks or duffle bags, drones or remotely controlled aerial devices, strollers, coolers, chairs, blankets, umbrellas, beach balls, bicycles or scooters, alcoholic beverages, illegal substances, pets (other than service animals), large items that could obstruct views of spectators around you, laser pens, bats and batons."
+
+And finally, tacked onto the bottom of the list as the final two items, what do we find?  Flipper Zero and Raspberry Pi.  Yep.  We wouldn't want any of those crowd-disturbing technologies or capabilities being bandied about casually.  The posting to the blog of the well-known and very popular Adafruit website continues.  Explicitly banned:  Raspberry Pi and Flipper Zero?  WHY?  Not categories.  Not capabilities.  Two named devices. Brand trademarked names.  Parked right next to weapons, explosives, and drones, as if the list itself is supposed to do the thinking for us.  Raspberry Pi is a general-purpose single-board computer.  It shows up in classrooms, newsrooms, accessibility rigs, art installations, and civic tech demos.
+
+Flipper Zero is a consumer electronics testing tool, but its functional territory overlaps heavily with laptops, smartphones, radios, microcontrollers that remain perfectly legal to carry.  If the concern is electronic interference, signal disruption, or hacking, the policy does not say that.  It gestures vaguely by naming a couple of gadgets and hoping the implication sticks. Curiosity, it seems, is now contraband.  There already is a list of prohibited items that works great.  At Times Square on New Year's Eve, one of the most tightly secured public events on the planet, the prohibited list is blunt and practical.  Backpacks.  Drones.  Weapons.  Alcohol.  Large objects that block movement or sightlines.  The rules focus on crowd dynamics and physical risk.  They do not play Whac-a-mole at the end with brand-name electronics.
+
+When a policy bans specific devices rather than behaviors or capabilities, it creates ambiguity for people on the ground.  Once a Raspberry Pi is banned, a smartphone sails through security despite being way more powerful, more connected, and more capable of surveillance, disruption, or both.  That is not a security framework.  That's a "vibe" based list.  Maybe it was AI-generated.  That would be interesting if that is what happened.  If the goal is to restrict electronic interference, the language should say so plainly.  Unauthorized transmitters.  Signal interception tools.  Electronic hacking devices.  Those are enforceable things already.  Naming a short list of familiar gadgets reads less like safety planning and more like anxiety fossilized into policy.
+
+There is a cultural cost to banning brand names like Raspberry Pi.  New York is full of educators, artists, technologists, and journalists who use small embedded computers as tools of expression and access.  A device-specific ban turns curiosity itself into something suspicious, while ignoring the far more capable computers already in everyone's pockets.  The future ban list will have everything.
+
+LEO:  This is my favorite part of this article here.
+
+STEVE:  Yes, the enumeration.  Today it's Raspberry Pi and Flipper Zero.  Tomorrow it's BeagleBone Blacks, Arduino Qs, ESP32 dev boards, Teensy boards, Pine64s, Orange Pi, Jetson Nanos, USB logic analyzers, SDR dongles, Bus Pirates, Defcon badges, hotel keycards, garage door openers, Tamagotchis, graphing calculators, old Nokias, Game Boys with link cables, a TI-83 calculator, right (held sideways), a Pocket Operator making beeps too abrasively, a Furby with unresolved father issues, and some guy's wristwatch that definitely has a microcontroller in it.  Meanwhile, everyone walks through holding a smartphone that can film, scan, transmit, triangulate, and livestream the entire event in 4K."
+
+LEO:  Yeah.
+
+STEVE:  He said:  "I tried to find emails to someone on the Mayor's team, DM'd their socials, et cetera.  So far here's what I received from the Mayor's team (and some auto-replies and bounces):  'Looping in Audra Heinrichs to help answer your questions.  All the best, Penelope Birnbaum.'  Penelope was the press assistant on Kamala Harris's presidential campaign, and now Press and Digital Associate, Zohran for NYC.  Audra Heinrichs 'directed all press logistics on the Mamdani campaign's final events.'"
+
+Public safety is a beacon, a flashlight, not a fog machine.  They have heavy hitters here.  They can fix this.  The list feels symbolic rather than functional.  New York has done better before, and it can do better again.  There's enough time for the new mayor's team to check this out.  And if they do, I'll get word out and say there will be no tickets to a security theater.
+
+So, you know, I can kind of see the Flipper Zero being on the list.  I mean, if you're going to have something like that.  And I can see why it might have needed to be named directly.  You know, it is now a famous mischievous hacking tool that you could argue has no real place or purpose at such an event.  If someone were to attempt to bring one in, although I'm sure they could smuggle it, it would not be unreasonable to ask them why they have it, and then probably hold it for them until they were leaving afterward.  And, you know, really it would need to be called out by name since using the generic "no transmitters allowed" would of course include everybody's phone.
+
+But that said, I can totally agree that the idea of the Raspberry Pi being put on the list is nothing short of nuts.  And I can see why this author wondered whether AI might have had a hand there.  Although, you know, it's all academic now, it would be interesting to know exactly where those last two items came from.  You know, like how did they find themselves on the list.
+
+LEO:  It's just a, I mean, I can't see getting upset about it.  Although I am upset about another thing.  Why do we always blame AI when people do stupid things?  Humans are very capable of doing stupid things all by themselves.
+
+STEVE:  We have, well, first of all, humans train the AI.  And we have a new whipping boy.
+
+LEO:  Right.
+
+STEVE:  Oh, it must have been AI.
+
+LEO:  Must have been AI.
+
+STEVE:  That's right.
+
+LEO:  This does not sound like something AI would say.  This sounds like something somebody who kind of half had an idea that...
+
+STEVE:  Yeah, or someone's nephew said, yeah. 
+
+LEO:  You know, you really shouldn't let Raspberry Pi.  Again, I agree with you.  I can see Flipper Zero.  That's a hacking device.  That's what that's designed to do.  What would you do, wait, carry a bare Raspberry Pi in your pocket?
+
+STEVE:  And a power supply and antennas and such, it's like, what?
+
+LEO:  We talked about it on TWiT, and they said, why didn't they ban WiFi Pineapples?  I mean, let's get serious.  There's some stuff that could have been.  But you can't, there's no way you can make a blanket list.
+
+STEVE:  No.
+
+LEO:  There's too many ways people can do things.  Anyway.
+
+STEVE:  I have...
+
+LEO:  I want to hear about this new show.  I want to know about this.
+
+STEVE:  I have, yes, I have the best news for our sci-fi enjoying listeners.
+
+LEO:  Okay.
+
+STEVE:  Forbes' headline was "Netflix's Best New Show Has a 100% Rotten Tomatoes Score, but There's a Catch."  They're describing a two-season, 16 episodes in total, and this is me speaking, I watched it, astonishingly well-conceived science fiction time travel series that can currently be found on Netflix and Apple TV.  Amazon Prime Video only has Season 2, and the rights are expiring.  Okay.  This thing is called "The Lazarus Project," L-A-Z-A-R-U-S, "The Lazarus Project."  There's a movie by the same name, and as you'd expect, "Lazarus" generically has been used several times before.  There's a movie.  There's a Lazarus Project movie, Lazarus Files and other stuff.
+
+What you want is "The Lazarus Project."  So beware of name collisions when you're searching.  The one I'm talking about is a two-season British television production.  I was made aware of it when it popped up on Netflix with the news that it would be leaving a few weeks from now, on January 28th.  I don't know whether or when Apple TV and Amazon may be losing it.  But since I never want to be without it, I mean that, I never want to be without this, after getting a couple - no, it is so good, Leo.
+
+LEO:  Oh, I can't wait.
+
+STEVE:  I don't even have to worry about overselling it.  I know I tend to oversell things when I'm excited about them or infatuated.  But oh, my god.  After getting a couple of episodes into the second season, I immediately purchased both seasons on Apple TV.  They were $20 each.  But, you know, I assume that means, if I bought them on Apple TV, I'll always have access to them.  Apple TV's not going to say, oh, sorry, Steve, you paid 20 bucks, and now you can't see it.
+
+Okay.  Following their headline, Forbes wrote:  "Netflix's Best New Show Has a 100% Rotten Tomatoes Score, but There's a Catch."  They wrote:  "That show is 'The Lazarus Project,' a sci-fi series that originally aired in 2023 on Sky, but has now ported over its two seasons to Netflix.  The series has a perfect 100% score on Rotten Tomatoes from critics, an infrequent feat."  Okay.  I checked over on Amazon Prime where it has a 4.8 out of 5, with most giving it 5 stars and a few giving it 4.  No one gave it a 1, 2, or 3.  Now, I'm mystified by the show's comparatively low 7.3 rating over on IMDB because I have never, and I really mean never, seen a more compelling, astonishingly clever, and gripping time travel concept and plot.  There is new stuff here.  "The Lazarus Project" is truly remarkable science fiction.  It's so good that I felt duty bound to tell everyone here.
+
+And I also posted about it in GRC's sci-fi newsgroup.  One of the denizens who hangs out over there replied:  "I watched it somewhere besides Netflix, and I have to admit," he said, "I was amazed, as well.  But I strongly recommend that people binge-watch it because the plot is highly complex, and some critical plot points happen almost in passing.  This is not a series to watch in the background while you're doing something else."  No.  I can't even imagine.  I keep hitting the backspace button in order to catch something again because, I mean, there is so much there.  He said:  "The logic of the time resets will have you twisted in knots at times.  But it's a completely new take on time travel."
+
+And I replied to Milton's posting, writing:  "I agree 100%.  It takes extreme attention and focus, which is part of what makes it so good.  It's the absolute reverse of 'nothing much happened during that episode.'  The sense is that they're working to cram as much content into each episode as possible.  And they succeed."
+
+Okay.  So I'll just say that the series has been nominated for a BAFTA award.  BAFTA is the British Academy of Film Awards, which is Britain's highest honor for British cinema.  There is a downside, which is the catch that Forbes referred to in their headline.  It's that the series apparently did not plan to end after just two seasons.  It proved, I believe, to be a bit too much for Sky TV's British viewer demographic, who probably did want to be able to do something while they, like, iron or something while they were watching TV.  You know, and I understand, I mean, it really is a lot.  Lorrie is lost.  She's like, okay, will you just tell me what happened?  Because, I mean, oh, Leo, it is so good.
+
+LEO:  I can't wait.
+
+STEVE:  It is so good.  So Sky chose not to commission a third season, and we're left a bit hanging.  Milton said that it looked like they tacked on kind of some attempt to satisfy, and I got right - it was almost 1:00 a.m. this morning when I could not make myself watch the final one because I had to go to sleep so I could do the podcast.
+
+LEO:  Wait a minute.  You watched the whole two seasons in one evening?
+
+STEVE:  No, no, no, no, no.  It took - I did the first three.  Then I was hooked.  And then I did the second season in two blocks of two and five or something.  Or two and two.  And then I watched the second season in three parts.  Anyway, the point is I am one episode from finishing.  I did not get the final episode.  But oh my god, the second to the last one last night, oh.  I mean it - oh.  Wow.  Anyway.
+
+LEO:  Wow, I can't wait to see this.
+
+STEVE:  It is really, really good.  So if you don't have Netflix, I'm trying to think.  You could purchase, but if you have Apple TV, you could buy the first episode for whatever it is, $2.95 or something, just episode.
+
+LEO:  Right.
+
+STEVE:  Then when you see how good it is, you could join Netflix just to watch both seasons, and then resign and save some money.  In fact, if you haven't ever done Netflix before, I think you can join and get a free week or something and then resign.  Oh.  It is really good.  And so probably, if you actually start, Leo, you will be done by the time we talk about it, if we can, if you watch it, by next podcast.
+
+LEO:  Okay.  Okay.  I'll be that hooked.  Oh, good.  All right.
+
+STEVE:  It is, oh it is beyond, it is this - okay.
+
+LEO:  Wow.
+
+STEVE:  Yeah.  It's just it's a treat.  So everybody - and again, don't have, you know, like distractions while you're trying to watch it.  You'll quickly see that you really need to pay attention.  The acting is good, as a lot of British TV really is, where they have people you've never seen before, but they're really good.  They're just - and it's one of those shows also where you kind of hope something's going to happen, and it does, where like everything you want to have happen, happens.  So it's gratifying that way.  But then they also completely keep you off balance with things that you didn't expect, and then afterwards you go, oh, that's so brilliant.  Anyway, yeah.  It's really good.
+
+LEO:  Can't wait. 
+
+STEVE:  Tom Crites sent me a link.  He's a listener of ours.  He sent Security Now! feedback.  It contained nothing but the link.  Which I would normally be a little skeptical about, but it was the subject of his email that caught my eye, which was "Vitamin D and Magnesium."  And the link was to a just, you know, December 30th published piece on the Science Daily website.  Science Daily does sort of synopses of other studies across the realm of science and sort of, like, pulls them all together.
+
+So the piece was titled "Why Your Vitamin D Supplements Might Not Be Working."  Now, since I was unaware of a tight link between Vitamin D and magnesium, since last week's holiday podcast was a replay of our much earlier Vitamin D podcast, and since magnesium happens to be another substance that I have extensively researched and experimented with, I wanted to share the substance of this piece, which is brief.
+
+The summary at the top says:  "A randomized trial from Vanderbilt-Ingram Cancer Center reveals that magnesium may be the missing key to keeping Vitamin D levels in balance.  The study found that magnesium raised Vitamin D in people who were deficient, while dialing it down in those with overly high levels, suggesting a powerful regulating effect.
+
+LEO:  So it increases it or decreases it, depending.
+
+STEVE:  It pulls it into the proper range.  They said:  "This could help explain why Vitamin D supplements don't work the same way for everyone, and why past studies linking Vitamin D to cancer and heart disease, as in prevention, have produced mixed results.
+
+The piece in Science News is a report on findings published in  The American Journal of Clinical Nutrition.  And so they went on to say:  "The study, published in The American Journal of Clinical Nutrition, adds clarity to long-standing debates about Vitamin D's links to colorectal cancer and other diseases.  These questions have gained attention due to mixed results from major studies, including the VITAL trial.  The new findings also reinforce earlier research from 2013 by the same team, which found that people with low magnesium intake often had low Vitamin D levels, as well.  So again, there was a correlation.  At that point they didn't have causation.  You need to do what happened, which was a randomized controlled clinical study in order to get the actual causal link."
+
+So they said:  "Beyond confirming earlier observations, the trial uncovered an additional insight.  Magnesium did not simply raise Vitamin D across the board.  Instead, it appeared to act as a regulator, lowering Vitamin D levels in participants whose levels were already high.  This is the first clinical evidence suggesting magnesium may help optimize Vitamin D levels rather than just increasing them, which could be important for reducing disease risk linked to Vitamin D imbalance.
+
+The Ingram Professor of Cancer Research and lead author of the study explained that the healthiest Vitamin D range appears to fall in the middle of a U-shaped curve.  Previous observational studies have linked this middle range to the lowest risk of cardiovascular disease.  Despite earlier warnings, Vitamin D did not show a clear link to cardiovascular disease in the recent VITAL trial.  Dai and co-author Martha Shrubsole, a research professor of medicine in the Division of Epidemiology, are now examining whether magnesium could help explain these inconsistent results.  Their work is part of the ongoing Personalized Prevention of Colorectal Cancer Trial.  Shrubsole said:  "There's a lot of information being debated about the relationship between Vitamin D and colorectal cancer risk that's based upon observational studies versus clinical trials.  The information is mixed thus far."
+
+The researchers turned their attention to magnesium after noticing that Vitamin D supplements did not work equally well for everyone.  Some people fail to raise their Vitamin D levels even when taking high doses.  Dai said: "Magnesium deficiency shuts down the Vitamin D synthesis and metabolism pathway."
+
+The study included 250 adults considered at high risk for colorectal cancer, either due to known risk factors or because they had previously had a precancerous polyp removed. Participants received either magnesium supplements or a placebo, with dosages tailored to their usual dietary intake.  Shrubsole noted that Vitamin D insufficiency is widely recognized as a public health concern in the United States, and many patients are advised to take supplements based on blood test results.  She said:  "Vitamin D insufficiency is something that has been recognized as a potential health problem on a fairly large scale in the U.S."  And as we know, that's relatively recent.  That was since we first did the podcast.
+
+She said:  "A lot of people have received recommendations from their healthcare providers to take Vitamin D supplements to increase their levels based on their blood tests.  In addition to Vitamin D, however, magnesium deficiency is an under-recognized issue.  Up to 80% of people do not consume enough magnesium in a day to meet the recommended dietary allowance (RDA) based on those national estimates."  And we know the RDA is not the "live long and prosper" level.  It's the "keep yourself above ground barely" level.  Shrubsole emphasized that magnesium intake in the study matched RDA guidelines and suggested that diet is the best way to increase magnesium levels.  Foods rich in magnesium include dark leafy greens, beans, whole grains, dark chocolate, fatty fish such as salmon, nuts, and avocados.
+
+Okay.  So having said all that, first I want to acknowledge that I know this is not a health and nutrition podcast, and that as a health hobbyist and tinkerer with no formal medical training, I would never presume to be an authoritative source of medical information.  So for those who have no interest in the topic of healthy longevity, please rest assured that we will not be spending much time on the subject.  I'm not going to go there.  That said, the subject of the preservation and maintenance of health, vitality, and energy as we age is an extreme personal passion of mine. It's something I've quietly devoted a large fraction of my life to researching and understanding, as well as experimenting with.  So in reply to this article which Tom brought to my attention, I'm going to share a bit more of what I've learned and practiced on the magnesium front.
+
+LEO:  Good, because, yeah, I want to hear about this.
+
+STEVE:  Yeah.  So it is absolutely true that magnesium is a grossly underappreciated mineral.  It is a required co-factor in more than 400 individual enzymatic reactions in our human body which transmute, being enzymes are involved in transmuting an organic model from one form to another.  The book I read back in 2009 that started me down the path to understanding the role and importance of magnesium was called "The Magnesium Miracle," written by Carolyn Dean, who's an MD and an ND.  I went over to Amazon to double-check the spelling of her name, and Amazon flagged that book as having been purchased by me in 2009.  It's currently $6 on Kindle and available in audio, Kindle, and paperback.
+
+And in fact I'm holding it up to the camera.  The front of the book says the title, "The Magnesium Miracle," which annoys me because it's not a miracle, right, it's science.  But okay.  She needs to sell some, and apparently she still is.  It says:  "Discovering the missing link to total health, lower the risk of heart disease, prevent stroke and obesity, treat diabetes, improve mood and memory."  
+
+So the problem with magnesium, the reason for that report's observation that there's a general magnesium deficiency in the U.S., is that natural sources of magnesium, you know, we don't synthesize the mineral in our body.  We have to get it exogenously.  And the natural sources of magnesium have largely been removed from our lives.
+
+Before we obtained our water from municipal processing plants, which is what's happening now, we once used to drink water from wells or from river streams where the water would contain dissolved magnesium.  And we'd be consuming plants that were rich sources of magnesium.  But plants don't synthesize magnesium atoms either.  So if they're grown in magnesium-poor soil, they're no longer able to provide the magnesium they once did.  And the water we drink now has been processed and filtered and chlorinated and bears very little resemblance to the water that was consumed by pre-industrial man.
+
+The upshot of living within a poor magnesium environment is a magnesium-poor body that's unable to synthesize as many of the enzymes it would like to, as it could if magnesium were available in greater supply.  Now, the problem is how to get magnesium into us, because that turns out to be a little tricky.  One of the things anyone who practices dietary supplementation comes to appreciate is that it can be difficult to get some substances into our bloodstream due to the fact that they must first survive our stomach acid's deliberately low acidic pH.  And after surviving our stomach, the substance will be absorbed by our intestinal lining into our bloodstream, but its first destination will then be our livers, where it may need to survive what's known as first-pass hepatic metabolism.  Our livers may wish to take it apart and use its bits for its own purposes.
+
+So what about magnesium?  Our stomach's low pH acidic contents is the death of most forms of supplementary magnesium, at least as far as disassociation from its carrier atoms is concerned.  When my physician recommended at my age, and this was several decades ago, that I should start probably having a periodic colonoscopy screening, he handed me a large empty plastic jug.  Well, it wasn't completely empty.  There was a loose white powder in the bottom of the jug.  My instructions were to just fill it with water and shake it up to dissolve the powder.  Then I was to pour a cup of this mixture every hour and drink it until the entire jug was empty.  And not long after that, my entire intestinal tract would also be similarly empty, and I'd be ready to have my intestinal lining inspected for any abnormalities.
+
+I'm sharing this seemingly off-topic story because that loose white powder - wasn't the only thing that was loose at that point - that loose white powder in the bottom of the initially empty jug was pure magnesium oxide.  Magnesium oxide is the least expensive and least well absorbed of all magnesium formulations.  It was what was traditionally used, along with ample water, to flush out one's intestines.
+
+LEO:  Is that what's in Milk of Magnesia?
+
+STEVE:  Yes, exactly.
+
+LEO:  Interesting.
+
+STEVE:  So my point is, this is not the magnesium you want to take...
+
+LEO:  You want to absorb it, yes.
+
+STEVE:  ...yes, if you're interested in replenishing and increasing your body's magnesium levels.  Now, there are many forms of magnesium.  There's magnesium oxide, citrate, magnesium malate, taurate, orotate, l-threonate, and so on.  All of these are simple salts of magnesium, and they all have their proponents.
+
+LEO:  They also all have, and probably meaninglessly, on the label, different uses.  Like l-threonate, it goes through the blood-brain barrier, so it's supposed to be good for your brain.
+
+STEVE:  Well, yes.  It is unique.  Magnesium l-threonate is unique in being able to cross the blood-brain barrier.
+
+LEO:  Okay, okay.  So that's not untrue.  So okay.  All right.
+
+STEVE:  No, that is true.  And so, you know, I guess they - and they all have various benefits, except probably magnesium oxide, which is just really a laxative.  So as you experiment, you will find that magnesium, in general, has this effect.  That is...
+
+LEO:  By the way, Epsom salts are magnesium sulfate.  This is an age-old remedy, isn't it.
+
+STEVE:  Yes, yes.
+
+LEO:  Wow.  Okay.
+
+STEVE:  Yes.  So magnesium is not harmful in any way.
+
+LEO:  Well, there must be a fatal dose.  I mean, I'm sure...
+
+STEVE:  Well, actually, no, because you are unable to absorb more than your digestive tract will give you.
+
+LEO:  Okay.
+
+STEVE:  So anyway, so oxide is the cheapest, but you don't want to use it.  It's just basically a laxative.  And as you experiment with it you will find in general magnesium has that effect.  It's not harmful in itself, which is why it was once used by the medical establishment as the standard means of preparing a patient for being scoped.
+
+LEO:  Right.
+
+STEVE:  Okay.  But the key concept to understand is that the laxative effect induced by magnesium is the result of its non-absorption into our bloodstream.  It's the magnesium that remains behind that causes that effect.  What happens is our intestines are induced to osmotically pull water into them by magnesium, so that's why that happens.  It's not what we want for optimal health, and certainly not for digestion.  So the problem is that, to varying degrees, all of those common simple salts of magnesium succumb to our stomach's acidic environment.  Their molecules disassociate into their constituent atoms, and then they suffer whatever fate awaits them.
+
+The problem of effective dietary mineral supplementation absorption was finally solved by a company called Albion Minerals.  Their nutritional chemists came up with a means of sneaking magnesium and other minerals, because actually they sell a huge amount of their bulk product into the veterinary and animal breeding markets, where you need healthy animals.  Their nutritional chemists, as I said, they figured out how to do this by sneaking the minerals into our intestines without being broken apart by stomach acid.  The key, it turns out, is instead of creating a simple salt to carry the magnesium, bind it into a dipeptide.  Now, that sounds more complicated than it is.  A dipeptide is just two amino acids.
+
+So there are two forms, two most common forms of magnesium that are highly successful and are worth taking.  One is known as Magnesium Glycinate Lysinate, and other is Magnesium Bisglycinate.  The first one, Magnesium Glycinate Lysinate, consists of an atom of magnesium bound to the two amino acids glycine and lysine.  Glycine is a actually a very good choice since it's the smallest of all amino acids, and also because glycine is another substance that most people could use a lot more of.  The second form of magnesium, which is Magnesium Bisglycinate, is an atom of magnesium bound to a pair of glycine molecules.  And this is handy since, as I said, being the smallest of all the aminos, there's a higher percentage of elemental magnesium per milligram of the combined molecule.
+
+Okay.  So the upshot of all of this is that either of these dipeptide forms of magnesium, and they're readily available wherever you find supplements and minerals and so forth, they will strongly resist disassociation in our low pH stomach environment.  They will be able to transport the magnesium through our stomach and cross our intestinal lining to carry it into our blood stream, where it can be used by our body.
+
+So I should note that, unlike Vitamin D and many other bloodborne substances whose levels can be checked with a blood test, there is no reliable blood test for magnesium because most of the magnesium that we have in our body is stored in our skeletal system, where it is literally kept out of circulation.
+
+So anyway, if you decide to get serious about magnesium, and I certainly have, the first thing I would recommend would be grabbing Carolyn's book, or otherwise learn much more about it than what I've just said here because obtaining sufficient magnesium I believe is important.  I only just barely touched on the importance of this very much underappreciated and inexpensive mineral for both immediate and long-term health.  Carolyn Dean and many others recommend that you experiment to find what's known as your either - sometimes they call it your "bowel tolerance level" or your "gut tolerance level."
+
+LEO:  I think we know what that means.
+
+STEVE:  Yes.  And that being the amount of magnesium you can consume in multiple divided daily doses, and you should divide them up, not take them all at once, where you begin to notice a laxative effect, and then back off from that until you are again comfortable.  If you're taking one of the dipeptide forms, that should initially be a lot of magnesium.  I kid you not, Leo, during my early experimentation there was a Christmas where I went up to visit my sister and her young kids at the time, where I was wearing some sort of a chronometer around my neck that beeped every hour, and I would take a magnesium tablet.
+
+LEO:  Oh, boy.  Okay.
+
+STEVE:  And my seven-year-old nephew said, "Mom, why is Uncle Steve beeping?"
+
+LEO:  Crazy Uncle Steve.
+
+STEVE:  Crazy Uncle Steve, yeah.  Anyway, what I noted is that, like nine months later I could suddenly take less than I used to be able to, and my brother-in-law, who I explained all this to, and who also decided to get on the magnesium bandwagon, he reported the same thing.  That is, you are replenishing your depleted body for quite some time.  And once it becomes topped off, you can't take as much as you were before because it won't get absorbed.  So there's really, I mean, some real-world evidence that you've just done something by taking a lot.  And I also do know that my rate of occasional PVCs, preventricular contractions, you know, which are just a normal consequence that everybody has, they used to be far higher than they are now.
+
+LEO:  Is that when your heart skips a beat a little bit?
+
+STEVE:  Exactly.  Yeah.  It's sort of a little double thumpa-thumpa, and then there's a little bit of a pause, and then you go on.  So anyway...
+
+LEO:  I may be doing it wrong because I take magnesium l-threonate in the morning, and I take magnesium citrate at lunch, and I take some magnesium glycinate at night to go to sleep.
+
+STEVE:  I think that's good.
+
+LEO:  Because they all have, they claim to have different properties; right?
+
+STEVE:  Yeah.  I take - I am experimenting with l-threonate because of the promise of it crossing the blood-brain barrier.
+
+LEO:  And that's a newer form, yeah.
+
+STEVE:  It's a newer form.  It's more expensive because someone has a patent on it.  So you're paying some licensing fee.  But I just take - I'm taking what I was always taking, which is the Doctor's Best High Absorption...
+
+LEO:  That's the glycinate.
+
+STEVE:  Yes.
+
+LEO:  Yeah, I have a big bottle of that, yeah.
+
+STEVE:  And I remember when I was telling - I was trying to turn my mom onto this.  She said, "Honey, this is an SUV."  She said, "I can't take this.  It's huge."
+
+LEO:  Oh, it is a big pill.
+
+STEVE:  But that's one of the things you also get used to after a while is swallowing a bunch of stuff.  And frankly...
+
+LEO:  Can you have too much, though?  Won't it impede the digestion?  Like I'm not going to get my nutrients?
+
+STEVE:  No.  It doesn't bind to anything else.
+
+LEO:  Oh, okay.
+
+STEVE:  So, yeah.  Like, I mean, I really liking taking Metamucil.  I got into Metamucil in the mornings because I just liked, you know, sort of an orange tart psyllium fiber drink.  But it turns out you can't...
+
+LEO:  You don't need it anymore.
+
+STEVE:  Well, you can't combine it with supplements because the psyllium fiber, the reason it lowers your cholesterol is it binds tightly with cholesterol in your intestines and transports it out.  It also binds tightly with all of the supplements you might be taking.
+
+LEO:  So, as you know, I'm on Ozempic, and it's been a boon to me.  I've lost weight, and my blood sugar is normal now, and it's amazing.  But one of the side effects is, because it slows the food moving through your stomach...
+
+STEVE:  Yes.
+
+LEO:  ...that you feel bloated, and you might be a little constipated because of it, or a lot, depending, you know.  And I thought I was supposed to do more fiber.  That's actually counter indicated because it just ends up your stomach's even fuller.  And it turns out magnesium citrate is the kind of recommended solution to that.  And that's been really good.
+
+STEVE:  Well, okay.  And the reason is that it's not as well absorbed.  What I would do, what I do do, so to speak, is I - sorry, I couldn't resist.  I just increase my consumption of glycinate lysinate because that has the same effect.  You get to take more because it is much better absorbed.  Citrate works at more...
+
+LEO:  It's not as well absorbed.
+
+STEVE:  Because it's not as well absorbed, so the magnesium that stays behind is the one that causes the mischief.  But you want some mischief.  And I am getting just the right amount of mischief.  I'm taking a full milligram, which is to say 10 of those magnesium glycinates a day.
+
+LEO:  Okay.
+
+STEVE:  Because each one has a 100 milligrams - I'm sorry, a full gram.  They each have 100 milligrams of elemental magnesium, so 10 of those is a full gram.
+
+LEO:  Right.  But most of it is not being absorbed; right?  So you take a lot because a lot of it is just going right through you.  Or no.
+
+STEVE:  A lot of it is being absorbed, but enough is not that it has that effect.
+
+LEO:  Okay.  And you can't overdose?
+
+STEVE:  You can't.  And I apologize to everyone for taking so much time.  You might - the young kids are rolling their eyes going, what the heck is he [crosstalk] talking about.
+
+LEO:  When you get to a certain age, children...
+
+STEVE:  That's right.
+
+LEO:  You start to worry about these things.  Let me just tell you.
+
+STEVE:  I can say that I know that a huge body of our listeners find this really interesting, and they like the fact that I bring science to [crosstalk]...
+
+LEO:  Yeah, well, we trust you not to be woohoo about this.
+
+STEVE:  Well, and what's fascinating is there are reasons this works.
+
+LEO:  Yeah, it makes sense.
+
+STEVE:  There's a reason the dipeptide form is what you want.
+
+LEO:  Well, I have that Doctor's Best, probably because of you, that glycinate.
+
+STEVE:  Yeah.  It is the one.
+
+LEO:  I have quite a few bottles of that.
+
+STEVE:  You could just take more of that and...
+
+LEO:  Take more of that.
+
+STEVE:  Just take more of that.
+
+LEO:  You know, one of the bad things about this, as I try different supplements and so forth, is I have lot of bottles of supplements I no longer take.  I don't know what to do with those.  I'll donate them to Goodwill.
+
+STEVE:  Yeah, been there, yeah.
+
+LEO:  Now I have a very large bottle of magnesium citrate.  Anybody want it?  Okay.  Yeah.  Let's take a little break, and we are going to talk about MongoBleed.
+
+STEVE:  Oh, yeah, baby.  And what I love about this is that everybody's going to understand the mistake.  It's such a cool mistake.
+
+LEO:  MongoDB is everywhere.  It's one of the most popular NoSQL databases out there.
+
+STEVE:  That's exactly what it is.
+
+LEO:  It's all over the place, yeah.  So a bad flaw in it would be a bad problem.  All right.  MongoBleed.  You did not name this, I take it.
+
+STEVE:  No, no.  Although I like the name, and we'll see why.
+
+LEO:  It's got a little "Blazing Saddles" thing going on.
+
+STEVE:  Well, remember...
+
+LEO:  Mongo.
+
+STEVE:  There was CitrixBleed, and there was Heartbleed.
+
+LEO:  Oh, yeah, Heartbleed.
+
+STEVE:  That's the famous one.  Actually Heartbleed is where this got its name.  So what is it?  MongoDB, for those who don't know, is a source available, this is what Wikipedia explains, "source-available, cross-platform, document-oriented database program.  Classified as a NoSQL database product," they write, "MongoDB uses JSON-like documents with optional schemas.  Released in February 2009 by 10gen, now MongoDB Inc., it supports features like sharding, replication, and ACID transactions from version 4.0 on.  MongoDB Atlas, its managed cloud service, operates on AWS, Google Cloud Platform, and Microsoft Azure.  Current versions are licensed under the Server Side Public License (SSPL).  MongoDB is a member of the MACH Alliance."
+
+They said:  "As of May 2025, MongoDB was the fifth most popular database software.  It focuses mostly on managing large databases of unstructured, 'messy' data.  It's typically used for mobile and web apps that commonly use unstructured databases.  As of 2024, there were 50,000 MongoDB customers.  MongoDB was originally best known as a NoSQL database product.  The company released a database-as-a-service product called Atlas in 2016 that became 70% of MongoDB's revenue by 2024.  Over time, MongoDB added analytics, transactional databases, encryption, vector databases, ACID transactions, migration features, and other enterprise tools.  Initially, the MongoDB software was free and open source under the AGPL license.  MongoDB adopted an SSPL license (Server Side Public License) for future releases starting in 2018."
+
+For those who are interested, I included a chart of the top five databases since I thought that our more DB-centric listeners might be curious about the industry's current database popularity lineup, which has MongoDB in fifth place.  So Oracle is firmly in first place with a January 26th score in wherever it was I found this of 1237.  MySQL is in second place at 867.  Microsoft's SQL Server, third place at 706.  PostgreSQL at 666, and MongoDB in fifth place at 376.  So if it's at 376, and Oracle in first place is at 1237, you know, it's about one quarter of the popularity of Oracle.  But still, fifth place and one quarter of the leading DB.  So that's a chunk.
+
+To give us a quick snapshot of Mongo's history, because this ends up being relevant, they wrote:  "The American software company 10gen began developing MongoDB in 2007 as a component of a planned platform-as-a-service product.  Two years later, in '09, the company shifted to an open-source development model and began offering commercial support and other services.  In 2013, 10gen changed its name to MongoDB, Inc.  On October 20th, 2017, MongoDB became a publicly traded company, listed on the NASDAQ as MDB, with an IPO price of $24 per share.  On November 8th, 2018, with the stable release" - and this is important, too - "4.0.4" - okay, back in 2018 - "the software's license changed from AGPL 3.0 to SSPL.
+
+"On October 30th" - and this is basically Wikipedia just reciting some facts, but the last one is really relevant.  "On October 30th, 2019, MongoDB teamed with Alibaba Cloud to offer Alibaba Cloud customers a MongoDB-as-a-service solution.  Customers can use the managed offering from Alibaba's global data centers."
+
+And the final item in Wikipedia's short summary of notable benchmarks through time:  "In December 2025, a major exploit was discovered and titled 'MongoBleed.'  This exploit led to the compromising of many corporate servers."
+
+And of course there's that final bit of news, which is the reason MongoDB is our main topic for this podcast of 2026, because a major exploit it was and still is, since we know how slow software updating can be, especially those servers forgotten and left in some closet gathering dust somewhere, but still being plugged into the Internet.  
+
+I've assembled the story of what happened here, starting in late December, from several sources.  But I've chosen this not only because this is a new, significant, industry-wide mess, but also because the bug, as I've now noted several times, which is now more than eight years old - that's important, too - and is thus present in virtually all instances of MongoDB.  It is in many ways a classic mistake.  No deep voodoo is used.  By the time we're finished here, I'm pretty certain that every one of our listeners will clearly understand what happened, along with how and why.
+
+So what's being called "MongoBleed" is officially CVE-2025-14847, the CVE assigned to this recently discovered vulnerability affecting all versions of MongoDB since version 3.6, which was first published on November 28th of 2017.  So this encompasses a huge span of major and minor releases, all of them.  Essentially, it is a subtle bug which was introduced into version 3.6 a little over eight years ago, and it was not discovered until just over eight years later by the MongoDB people themselves internally after everyone in the world had updated and upgraded to any of the past several years of releases.  Meaning that all, I'm sure all MongoDB that is out in the world today incorporated this flaw, which was introduced at version 3.6.
+
+So now, as for "everyone in the world," how "everyone" is that?  The Internet scanning company Censys has identified on the order of 87,000 publicly reachable MongoDB instances.  And that's, of course, the crucial bit of information, since it's those publicly accessible instances that the bad guys have access to.  And access they have had.  This is one of those inopportunely timed events which became public just before Christmas, and was not the Christmas present many IT workers were hoping to unwrap.
+
+Exploitation of this long-present vulnerability allows an unauthenticated, meaning anyone, attacker - which is, you know, again, unauthenticated attacker is now the fancy way the industry refers to "anyone" - to read memory from the database server's heap, meaning anything that was allocated to memory from previous database operations.  It's only the fact that this is not directly a remote code execution vulnerability that rendered this a CVSS of 8.7 rather than 9.8 or 10.0 house on fire, so forth.  And it's because this vulnerability leaks database server memory that it's been named "MongoBleed," which is meant of course to remind us of Heartbleed, which was a flaw discovered in OpenSSL's 1.0.1 implementation, and leaked server memory through SSL connections.
+
+Okay.  So here comes a description of this exploit which just ruined many Christmases after bad guys figured out that they could spend their Christmas vacation reading out a bunch of MongoDB server data from around 87,000 publicly available server instances.  Okay, first of all, MongoDB uses its own TCP wire protocol, you know, that is protocol on the wire, you know, instead of, for example, something like HTTP.  And that's not unusual for databases, especially when they are working to obtain the highest possible network performance.  So a general just generic raw TCP connection is established to the server's TCP port 27017.
+
+Now, as an aside, when I just asked ChatGPT which port MongoDB server uses - as I confessed earlier on this podcast, I just ask ChatGPT things like this.  I could have gone and looked, done a google search, and I could have found the information, too.  But I knew that ChatGPT would know.  So I asked ChatGPT which port MongoDB server uses, and to that answer, it told me it was 27017, it added the note "Note:  Exposing 27017 to the public Internet is strongly discouraged.  It should be firewalled or bound to private interfaces only."  Right.  So even this unconscious LLM knows better than some 87,000 server deployments and deployers.
+
+LEO:  Uh-huh.  You see?  You see?
+
+STEVE:  Uh-huh.
+
+LEO:  Don't blame the AI.  People are dumb all on their own.
+
+STEVE:  Okay.  So just to be clear, MongoDB itself probably never needs to be publicly exposed.  It would normally be sitting behind a publicly-exposed web-app server of some kind, serving as that web-app server's backend database.  MongoDB itself really doesn't have any public-exposure use cases.  We've been talking a lot recently about the need to make these sorts of public exposure mistakes far, far more difficult to make.  When I was swooning over Cisco's promises a month or two back, it was because the noises Cisco was then making strongly suggested that this might have finally sunk in.  We can only hope and pray.
+
+Anyway, so we connect with TCP to the server's port 27017.  Mongo uses a binary variant of JSON called BSON, you know, binary object notation.  So the request that's sent to the Mongo server contains one of these BSON messages.  And for the sake of the speed of transmission, that request can optionally be compressed using ZLIB.  Compression makes the message smaller, of course, so one of the 32-bit values in the request header at the front of the message, which specifies that this request has been compressed, indicates the original uncompressed, the decompressed size that the message would be, what it originally would be and what it would again be when decompressed by the receiving server.
+
+So this allows the receiving MongoDB server to request the allocation of a block of memory from the underlying - actually it's the runtime, the C++ runtime, we'll get to that in a second - into which MongoDB will decompress the message.
+
+So an attacker creates and sends a server request which claims to contain far more data than it actually does.  In response, the server allocates the requested memory.  An attacker might claim, for example, that the uncompressed request will require one million bytes, one megabyte, when in fact it only needs 1K.  The critical flaw is that, once MongoDB has finished decompressing, it never checks the actual resulting size of the newly-decompressed payload.  It trusts the data the user provided, using that as the actual size of the payload.
+
+Now, I need to stop here to hover over that phrase a bit longer, that phrase being "It trusts the data the user provided."  If we were to produce a list of the root causes behind many of the worst flaws that have been found in software, "trusting user-provided input" would definitely be right up there near the top, if not perhaps in first place, since even buffer overflows typically result from the similar mistake of trusting and using something that a malicious user deliberately provided.  In this case we have a deliberate buffer underflow that results entirely from trusting input from the user.  Okay.  So what's the big deal about allocating an oversize buffer that's not needed?
+
+In many contemporary languages, memory allocated for a program is cleared to zeroes, it's initialized to zeroes, before it's returned for use by the caller who requested an allocation of memory.  But malloc(), the memory allocation function used by C and C++, does not bother doing so.  This is part of the trusting, performance-oriented but dangerous, legacy of C.  Since zeroing RAM takes time and blows the processor cache, C deliberately returns uninitialized memory.  And wouldn't you know, MongoDB is written in C++.  The result of the bug is that multiple megabytes of the server's raw internal data can be exfiltrated to the attacker.
+
+This data might and often does contain cleartext passwords and credentials, session tokens, API keys, customer data, database configurations, system info, docker paths, and client IP addresses and so on.  In short, all of the internal operations of the server that would otherwise never be made available to anyone, whether they had authenticated and were legitimate user or not.
+
+So to sum this up, an attacker sends an otherwise valid MongoDB message which indicates that it employs compression.  But that compressed message is deliberately manipulated to specify a hugely exaggerated claim about the message's uncompressed size.  Since the server has no way to know in advance, MongoDB obtains a large and uninitialized buffer from the C runtime, based upon the attacker's message's claimed need.  MongoDB's built-in Zlib decompresses the much smaller compressed data into just the front of the huge decompression buffer, thus avoiding overwriting the mother lode of data that's already sitting there in that buffer.
+
+Subsequent commands then instruct the database server to return to this attacker what it believes is the user's provided data, even though it's actually megabytes of whatever data had been previously used and left behind by previous database operations and internal workings of any kind.
+
+It's obvious now why this critical flaw was named "MongoBleed."  Right?  And also why it was given a CVSS of 8.7.  Although it doesn't allow a remote attacker to execute their own code on the server, it's a data exfiltration flaw of the highest order that's just about as bad as it gets.  Proof-of-concept code has been published on GitHub, and the flaw is trivial to exploit.  There's nothing like, you know, "It only works less than one time in one thousand, and only when your code wins some slippery internal race condition or something."  No.  This one is extremely straightforward.  It obeys simple rules.  The attacker receives much more than a tiny trickle of data over time.
+
+Without raising any alarms, without crashing the server or otherwise calling any attention to itself, the abuse of this longstanding vulnerability that's been present in every version of MongoDB published in the last eight years, allows remote bad guys to freely rummage around inside the more than 87,000 currently online and publicly exposed instances of MongoDB.  They're able to keep sucking out and examining megabytes of a server's data that is assumed to be utterly private internal working data, and which might therefore, and does, it turns out, often contain very juicy information.
+
+It's always fun to see Kevin Beaumont's take on these things.  On December 26th, the day after Christmas, Kevin posted:  "Somebody from Elastic Security decided to post an exploit for CVE-2025-14847 on Christmas Day.  The vuln, which dropped just before Christmas, in theory allowed memory read without authentication.  Patches are available.  It impacts every version of MongoDB going back about a decade.  Another vendor decided it would be a great idea to post technical details on Christmas Eve."  And he has a link to an Ox security blog.
+
+He said:  "The exploit dropped yesterday and is the first public exploit.  It's dubbed MongoBleed.  I've validated that said exploit is real.  You can just supply an IP address of a MongoDB instance, and it'll start ferreting out in-memory things such as database passwords (which are plain text), AWS secret keys, et cetera.  The exploit specifically looks for those class of credentials and secrets, as well.  The Internet footprint of MongoDB is very large, over 200,000 instances.  Because of how simple this is now to exploit, the bar is removed.  Expect high likelihood of mass exploitation and related security incidents.  The exploit author has provided no details on how to detect exploitation in logs via products like Elastic.  Advice would be to keep calm and patch Internet facing assets."
+
+So now we know all about this mess.  And Kevin's ending advice to keep calm and patch Internet facing assets reminded me of something Leo and I talked about long ago.  We made the observation, many times in fact, that once a user's system had been infected by something, anything, it was never really again possible to trust it.  How could anyone ever know with 100% assurance that every last bit of an infection had been removed?  And what about whether an infection might have spread over the local network to infect other assets?  In short, it's a real mess.
+
+We've also seen instances where huge problems resulted when companies did not take prior intrusions seriously enough.  The advice is always to rotate all credentials which may have had any chance of being exposed, meaning invalidate any long-term authentication tokens, change all passwords, and so on.  But as I said, we keep seeing instances where companies, for one reason or another, you know, what?  Oversight?  Laziness?  Lack of belief that it was really necessary?  Who knows?  But for whatever reason they failed to adequately and fully remediate the consequences of a breach, only to suffer again, often even worse.
+
+So now consider the plight of corporate users of publicly-exposed MongoDB servers.  You're told that for the past eight years, the database server you've been relying upon has contained a flaw that allows for effectively unfettered mass exfiltration of your server's internal working memory which contains myriad private credentials, past database search results, and essentially any and all proprietary information to which that server may have had internal access or may have been storing and retrieving over time.  To call this a mess is truly an understatement.  And this mess is now squarely in the laps of every enterprise that was using a publicly exposed MongoDB server.
+
+My question is, why was even a single instance of MongoDB publicly exposed?  I'm sitting here, right now, as I talk to Leo and our audience, in Southern California.  From my location here, I have access to any and all of those 87,000-some instances of MongoDB.  Why?  Why do I have access?  Why can I send out a TCP SYN packet to port 27017 to any of those 87,000 IPs and promptly receive a TCP SYN/ACK packet inviting me to complete the TCP handshake connection?  Why?  I have no need to ever do so.  Whoever runs that MongoDB instance certainly doesn't want or expect me, sitting here in Southern California, to be able to connect to their database server.  But I can.  Why?  By now I hope that everyone in this podcast's audience understands, not only that this is wrong, but just how wrong it is.
+
+If I were to confront whomever it was who set up any given instance among those 87,000, that IT person would probably respond:  "Well, we've password-protected access to our database, and you can't do anything without that."  Oh yeah?  MongoBleed, baby.  No authentication needed.  The decompression of the message is pre-authentication and never requires any form of authentication for its exploitation.  One of the refrains everyone listening to this podcast has been hearing from me, beginning last year when it finally so clearly crystallized after we all witnessed mistake after mistake after mistake which all carried the same pattern - this pattern - which is that authentication does not work.
+
+Now, the world depends upon and turns on the strength of authentication.  So I obviously don't mean that it can't work.  What I mean is that it cannot be absolutely depended upon to work.  In my hypothetical conversation with that MongoDB IT person, their defense of their database's utterly unnecessary public exposure was that I didn't know the secret handshake, so they didn't feel the need to take every possible precaution.  The massive sweep of today's MongoBleed vulnerability is the direct consequence of that wrong way of thinking.  That way of thinking is obviously defective and wrong.
+
+Sitting here in Southern California, I have no need to be able to connect to any of those 87,000 MongoDB servers, even if only to test the strength of their authentication.  I should not be allowed to do that.  But I can.  And that's on them.  That's on each and every one of them individually.  This erroneous reliance upon remote authentication, which we keep seeing over and over does not work, is perhaps the single most important thing that has to change in today's Internet-networked world.  And what's most galling is that it's not about flaws or mistakes; right?  It's entirely about policy and caring.  If we cared to, we could fix it.
+
+LEO:  Bravo, Steve.  Good to know.  It's amazing that 80,000-plus people ignore the instructions and just do it. 
+
+STEVE:  I would love to be a fly on the wall to know how - what were they thinking?  How did that happen?  I mean, it must be that it's like, well, we have a password.
+
+LEO:  Maybe, or they're not - but it's not public by default; right?
+
+STEVE:  No.  
+
+LEO:  So they'd have to explicitly say open up this port and make it available.
+
+STEVE:  It's just like whatever that server was we talked about a couple weeks ago.  I mean, it says right there in the docs, do not bind this to a publicly facing interface.  
+
+LEO:  Right.  Right.  It's kind of amazing.  It's not how you would normally set up a database like this.  You'd have - the CMS would access the database and serve this [crosstalk].
+
+STEVE:  Exactly.  Yes.  It's not...
+
+LEO:  So it's a weird way to do it.
+
+STEVE:  Nobody - why can I access their...
+
+LEO:  Your data.
+
+STEVE:  I have no need or purpose.  I shouldn't be able to even see it.  I shouldn't know that it exists.  It ought to be on their LAN.
+
+LEO:  Yeah.  It's bizarre that so many people have done that on purpose.  Oh, well.
+
+STEVE:  Well, and Leo, these are the problems we have, not the lifetime of certificates.
+
+LEO:  Right.  You're right.  Right.
+
+STEVE:  That's what's so maddening.
+
+LEO:  Okay.  Well, you've been warned.  I mean, probably there are a few people listening to this show who are going, ooh, yeah, maybe I'd better go fix that.
+
+STEVE:  Oh.  And after you fix it, watch "The Lazarus Project" on Netflix.
+
+LEO:  Going to watch it tonight.
+
+STEVE:  Oh, boy.  It is so good.  Leo, you will be immediately hooked.
+
+Copyright (c) 2025 by Steve Gibson and Leo Laporte.  SOME RIGHTS RESERVED.  This work is licensed for the good of the Internet Community under the Creative Commons License v2.5.  See the following Web page for details:  https://creativecommons.org/licenses/by-nc-sa/2.5/.
+
+
