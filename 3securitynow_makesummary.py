@@ -56,8 +56,8 @@ def merge_files(files, output_filename):
 
 def save_merged_file(content, file_list, output_filename_base, counter):
     """Save the merged content into a new file."""
-    first_file = os.path.basename(file_list[0])
-    last_file = os.path.basename(file_list[-1])
+    first_file = os.path.basename(file_list[0]).replace('.txt', '')
+    last_file = os.path.basename(file_list[-1]).replace('.txt', '')
     # Generate a shorter file name with the first and last file names in the group
     merged_file_name = f"{output_filename_base}_{first_file}_to_{last_file}_part{counter}.txt"
     

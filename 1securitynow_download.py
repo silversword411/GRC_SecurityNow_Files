@@ -2,8 +2,8 @@ import os
 import requests
 
 # Define the range of file numbers
-start_num = 1022
-end_num = 1036
+start_num = 1059
+end_num = 1073
 
 # Define the URL template
 url_template = "https://www.grc.com/sn/sn-{:03d}.txt"
