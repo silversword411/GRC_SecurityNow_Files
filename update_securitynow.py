@@ -16,6 +16,7 @@ Usage:
     python update_securitynow.py           # Interactive mode
     python update_securitynow.py --check   # Just check for new episodes
     python update_securitynow.py --auto    # Auto-download without prompting
+    python update_securitynow.py --archives-only  # Rebuild zip files from local files
 """
 
 import os
@@ -112,6 +113,13 @@ def download_episode(episode_num):
         return False
 
 
+def episode_filename(episode_num):
+    """Return the transcript filename for an episode number."""
+    if episode_num >= 1000:
+        return f"sn-{episode_num}.txt"
+    return f"sn-{episode_num:03d}.txt"
+
+
 def extract_date(file_content):
     """Extract the DATE field from episode content."""
     date_pattern = re.compile(r"DATE:\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})")
@@ -159,6 +167,16 @@ def natural_sort_key(filename):
     """Natural sort key for filenames with numbers."""
     return [int(text) if text.isdigit() else text.lower()
             for text in re.split(r'(\d+)', filename)]
+
+
+def remove_file_if_possible(filepath, description):
+    """Remove a file, warning instead of failing if Windows has it locked."""
+    try:
+        os.remove(filepath)
+        return True
+    except PermissionError:
+        print(f"  Could not remove {description} because it is open or locked: {os.path.basename(filepath)}")
+        return False
 
 
 def generate_summaries():
@@ -240,8 +258,8 @@ def create_zip(latest_episode):
         if filename.startswith('summarized') and filename.endswith('.zip'):
             old_path = os.path.join(SUMMARIZED_DIR, filename)
             if old_path != zip_path:
-                os.remove(old_path)
-                print(f"  Removed old zip: {filename}")
+                if remove_file_if_possible(old_path, "old zip"):
+                    print(f"  Removed old zip: {filename}")
 
     # Create new zip
     summary_files = [f for f in os.listdir(SUMMARIZED_DIR)
@@ -254,6 +272,20 @@ def create_zip(latest_episode):
 
     print(f"  Created: {zip_name}")
     return zip_name
+
+
+def update_archives(latest_episode):
+    """Create/update all distributable zip archives."""
+    zip_name = create_zip(latest_episode)
+    update_raw_episodes_zips(latest_episode)
+    update_readme(latest_episode, zip_name)
+    return zip_name
+
+
+def rebuild_local_outputs(latest_episode):
+    """Regenerate local summaries and archives without downloading episodes."""
+    generate_summaries()
+    return update_archives(latest_episode)
 
 
 def update_readme(latest_episode, zip_name):
@@ -328,8 +360,8 @@ def update_raw_episodes_zips(latest_episode):
             if filename.startswith(prefix) and filename.endswith('.zip'):
                 old_path = os.path.join(ZIPS_DIR, filename)
                 if old_path != zip_path:
-                    os.remove(old_path)
-                    print(f"  Removed old zip: {filename}")
+                    if remove_file_if_possible(old_path, "old zip"):
+                        print(f"  Removed old zip: {filename}")
 
         # Skip if zip already exists and group is complete (won't change)
         group_is_complete = (end == start + ZIP_GROUP_SIZE - 1)
@@ -341,11 +373,7 @@ def update_raw_episodes_zips(latest_episode):
         # Collect episode files for this group
         files_to_zip = []
         for ep_num in range(start, end + 1):
-            if ep_num >= 1000:
-                filename = f"sn-{ep_num}.txt"
-            else:
-                filename = f"sn-{ep_num:03d}.txt"
-
+            filename = episode_filename(ep_num)
             filepath = os.path.join(EPISODES_DIR, filename)
             if os.path.exists(filepath):
                 files_to_zip.append((filepath, filename))
@@ -370,8 +398,8 @@ def update_raw_episodes_zips(latest_episode):
                     break
             if not matches_expected:
                 old_path = os.path.join(ZIPS_DIR, filename)
-                os.remove(old_path)
-                print(f"  Removed legacy zip: {filename}")
+                if remove_file_if_possible(old_path, "legacy zip"):
+                    print(f"  Removed legacy zip: {filename}")
 
     return created_zips
 
@@ -395,6 +423,8 @@ def main():
                         help='Just check for new episodes without downloading')
     parser.add_argument('--auto', action='store_true',
                         help='Auto-download without prompting')
+    parser.add_argument('--archives-only', action='store_true',
+                        help='Rebuild zip archives from local files without checking for new episodes')
     args = parser.parse_args()
 
     print("=" * 60)
@@ -410,11 +440,23 @@ def main():
     local_latest = get_latest_local_episode()
     print(f"\nLatest local episode: {local_latest}")
 
+    if args.archives_only:
+        if local_latest == 0:
+            print("\nNo local episodes found.")
+            return 1
+        rebuild_local_outputs(local_latest)
+        print_git_commands(local_latest)
+        return 0
+
     # Check for new episodes
     remote_latest = find_latest_remote_episode(local_latest)
 
     if remote_latest <= local_latest:
         print("\nNo new episodes available.")
+        if not args.check:
+            print("Regenerating local summaries and ensuring zip archives are current...")
+            rebuild_local_outputs(local_latest)
+            print_git_commands(local_latest)
         return 0
 
     new_count = remote_latest - local_latest
@@ -446,11 +488,7 @@ def main():
     # Fix timestamps for new files only
     print("\nFixing timestamps for new episodes...")
     for ep_num in range(local_latest + 1, remote_latest + 1):
-        if ep_num >= 1000:
-            filename = f"sn-{ep_num}.txt"
-        else:
-            filename = f"sn-{ep_num:03d}.txt"
-
+        filename = episode_filename(ep_num)
         filepath = os.path.join(EPISODES_DIR, filename)
         if os.path.exists(filepath):
             date_str = fix_file_timestamp(filepath)
@@ -460,14 +498,8 @@ def main():
     # Generate summaries
     generate_summaries()
 
-    # Create summarized zip
-    zip_name = create_zip(remote_latest)
-
-    # Update raw episodes zips (500-episode groups)
-    update_raw_episodes_zips(remote_latest)
-
-    # Update README
-    update_readme(remote_latest, zip_name)
+    # Create/update archive zips and README
+    update_archives(remote_latest)
 
     # Print git commands
     print_git_commands(remote_latest)

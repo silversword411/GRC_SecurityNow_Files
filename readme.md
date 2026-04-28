@@ -12,7 +12,7 @@ The .py files are for:
 
 ## TLDR for Google's NotebookLM
 
-Download [summarized001-1059.zip](/summarized/summarized001-1059.zip), extract and upload to a notebook. Slowly. When I tried, it rejected random ones. I'd do 5 files at a time.
+Download [summarized001-1075.zip](/summarized/summarized001-1075.zip), extract and upload to a notebook. Slowly. When I tried, it rejected random ones. I'd do 5 files at a time.
 
 ## Tidbits
 
